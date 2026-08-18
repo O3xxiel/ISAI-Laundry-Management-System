@@ -1,0 +1,13 @@
+.env
+.env.local
+*.env
+/vendor/
+/node_modules/
+composer.lock
+/frontend/dist/
+/frontend/.vercel/
+.DS_Store
+Thumbs.db
+*.log
+.vscode/
+.idea/
