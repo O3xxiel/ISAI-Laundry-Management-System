@@ -1,0 +1,125 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Usuario {
+  id             Int      @id @default(autoincrement())
+  nombre         String   @db.VarChar(100)
+  usuario        String   @unique @db.VarChar(50)
+  contrasenaHash String   @map("contrasena_hash") @db.VarChar(255)
+  rol            String   @default("operador") @db.VarChar(20)
+  pedidos        Pedido[]
+  movimientos    MovimientoInsumo[]
+
+  @@map("usuarios")
+}
+
+model Cliente {
+  id       Int      @id @default(autoincrement())
+  nombre   String   @db.VarChar(150)
+  telefono String   @db.VarChar(20)
+  correo   String?  @db.VarChar(150)
+  creadoEn DateTime @default(now()) @map("creado_en")
+  pedidos  Pedido[]
+
+  @@map("clientes")
+}
+
+// unidadCobro: 'peso' (precio por libra), 'pieza' (precio por unidad) o 'fijo' (tarifa plana)
+model Servicio {
+  id          Int          @id @default(autoincrement())
+  nombre      String       @db.VarChar(100)
+  unidadCobro String       @map("unidad_cobro") @db.VarChar(10)
+  precio      Decimal      @db.Decimal(6, 2)
+  items       PedidoItem[]
+
+  @@map("servicios")
+}
+
+model Pedido {
+  id           Int          @id @default(autoincrement())
+  clienteId    Int          @map("cliente_id")
+  cliente      Cliente      @relation(fields: [clienteId], references: [id])
+  usuarioId    Int?         @map("usuario_id")
+  usuario      Usuario?     @relation(fields: [usuarioId], references: [id])
+  items        PedidoItem[]
+  total        Decimal      @db.Decimal(8, 2)
+  estado       String       @default("recibido") @db.VarChar(30)
+  fechaPromesa DateTime?    @map("fecha_promesa")
+  listoEn      DateTime?    @map("listo_en")
+  notas        String?      @db.VarChar(500)
+  creadoEn     DateTime     @default(now()) @map("creado_en")
+  pagos        Pago[]
+  factura      Factura?
+
+  @@map("pedidos")
+}
+
+// Un renglón por servicio dentro de un pedido (permite combinar lavado + planchado + extras).
+model PedidoItem {
+  id         Int      @id @default(autoincrement())
+  pedidoId   Int      @map("pedido_id")
+  pedido     Pedido   @relation(fields: [pedidoId], references: [id])
+  servicioId Int      @map("servicio_id")
+  servicio   Servicio @relation(fields: [servicioId], references: [id])
+  cantidad   Decimal  @db.Decimal(6, 2)
+  subtotal   Decimal  @db.Decimal(8, 2)
+
+  @@map("pedido_items")
+}
+
+// Bitácora de cobros de un pedido (anticipo al recibir, resto al entregar, etc.) — el corte
+// de caja se calcula sumando esto por método de pago, no un solo campo en Pedido.
+model Pago {
+  id       Int      @id @default(autoincrement())
+  pedidoId Int      @map("pedido_id")
+  pedido   Pedido   @relation(fields: [pedidoId], references: [id])
+  monto    Decimal  @db.Decimal(8, 2)
+  metodo   String   @db.VarChar(30)
+  fecha    DateTime @default(now())
+
+  @@map("pagos")
+}
+
+model Insumo {
+  id             Int                @id @default(autoincrement())
+  nombre         String             @db.VarChar(100)
+  cantidadActual Decimal            @default(0) @map("cantidad_actual") @db.Decimal(8, 2)
+  unidad         String             @db.VarChar(20)
+  stockMinimo    Decimal            @default(0) @map("stock_minimo") @db.Decimal(8, 2)
+  movimientos    MovimientoInsumo[]
+
+  @@map("insumos")
+}
+
+model MovimientoInsumo {
+  id        Int      @id @default(autoincrement())
+  insumoId  Int      @map("insumo_id")
+  insumo    Insumo   @relation(fields: [insumoId], references: [id])
+  usuarioId Int?     @map("usuario_id")
+  usuario   Usuario? @relation(fields: [usuarioId], references: [id])
+  tipo      String   @db.VarChar(10)
+  motivo    String   @db.VarChar(30)
+  nota      String?  @db.VarChar(300)
+  cantidad  Decimal  @db.Decimal(8, 2)
+  fecha     DateTime @default(now())
+
+  @@map("movimientos_insumo")
+}
+
+model Factura {
+  id            Int      @id @default(autoincrement())
+  pedidoId      Int      @unique @map("pedido_id")
+  pedido        Pedido   @relation(fields: [pedidoId], references: [id])
+  numeroFactura String   @unique @map("numero_factura") @db.VarChar(20)
+  total         Decimal  @db.Decimal(8, 2)
+  fechaEmision  DateTime @default(now()) @map("fecha_emision")
+
+  @@map("facturas")
+}
