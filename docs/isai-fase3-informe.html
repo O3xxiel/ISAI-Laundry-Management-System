@@ -1,0 +1,569 @@
+<title>ISAI — Informe de Análisis</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root {
+    --bg: #F2F5F4;
+    --surface: #FFFFFF;
+    --surface-2: #E7EEEC;
+    --border: #CBD8D5;
+    --border-strong: #A9BCB8;
+    --text: #142422;
+    --text-muted: #4B615D;
+    --accent: #0E6E68;
+    --accent-strong: #0A524D;
+    --accent-soft: #DCEEEC;
+    --warn: #A2611A;
+    --warn-soft: #F3E1C8;
+    --shadow: 0 1px 2px rgba(20, 36, 34, 0.06), 0 8px 24px -16px rgba(20, 36, 34, 0.18);
+
+    --font-display: 'Fraunces', Georgia, serif;
+    --font-body: 'Public Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0D1715;
+      --surface: #14201E;
+      --surface-2: #1A2926;
+      --border: #2B3D3A;
+      --border-strong: #3C534F;
+      --text: #E6F1EE;
+      --text-muted: #9AB3AD;
+      --accent: #4FCFC0;
+      --accent-strong: #86E3D6;
+      --accent-soft: #1C3835;
+      --warn: #E3A25C;
+      --warn-soft: #3A2C18;
+      --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px -16px rgba(0, 0, 0, 0.5);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --bg: #0D1715;
+    --surface: #14201E;
+    --surface-2: #1A2926;
+    --border: #2B3D3A;
+    --border-strong: #3C534F;
+    --text: #E6F1EE;
+    --text-muted: #9AB3AD;
+    --accent: #4FCFC0;
+    --accent-strong: #86E3D6;
+    --accent-soft: #1C3835;
+    --warn: #E3A25C;
+    --warn-soft: #3A2C18;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px -16px rgba(0, 0, 0, 0.5);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 1.6;
+  }
+
+  .layout { display: flex; align-items: flex-start; max-width: 1180px; margin: 0 auto; }
+
+  nav.toc {
+    position: sticky;
+    top: 0;
+    width: 240px;
+    flex-shrink: 0;
+    height: 100vh;
+    overflow-y: auto;
+    padding: 32px 20px;
+    border-right: 1px solid var(--border);
+  }
+  nav.toc .brand {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 1.05rem;
+    margin-bottom: 4px;
+  }
+  nav.toc .brand-sub {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 28px;
+    display: block;
+  }
+  nav.toc ol { list-style: none; padding: 0; margin: 0; counter-reset: toc; }
+  nav.toc li { counter-increment: toc; margin-bottom: 2px; }
+  nav.toc a {
+    display: block;
+    padding: 7px 10px;
+    border-radius: 8px;
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 0.86rem;
+  }
+  nav.toc a::before {
+    content: counter(toc, decimal-leading-zero) "  ";
+    font-family: var(--font-mono);
+    color: var(--border-strong);
+    font-size: 0.76rem;
+  }
+  nav.toc a:hover { background: var(--surface-2); color: var(--text); }
+
+  main { flex: 1; min-width: 0; padding: 56px 56px 100px; }
+
+  .cover { margin-bottom: 64px; }
+  .eyebrow {
+    display: inline-block;
+    font-size: 0.76rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent-strong);
+    background: var(--accent-soft);
+    padding: 5px 12px;
+    border-radius: 999px;
+    margin-bottom: 18px;
+  }
+  h1 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: clamp(1.9rem, 3vw, 2.7rem);
+    line-height: 1.12;
+    margin: 0 0 20px;
+    text-wrap: balance;
+    max-width: 16ch;
+  }
+  .cover-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 28px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+    font-size: 0.88rem;
+    color: var(--text-muted);
+  }
+  .cover-meta strong { color: var(--text); font-weight: 600; }
+
+  section { margin-bottom: 68px; scroll-margin-top: 24px; }
+  h2 {
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin: 0 0 6px;
+    text-wrap: balance;
+  }
+  h3 {
+    font-family: var(--font-display);
+    font-size: 1.12rem;
+    font-weight: 600;
+    margin: 32px 0 10px;
+  }
+  .section-intro { color: var(--text-muted); max-width: 65ch; margin: 0 0 24px; }
+  p { max-width: 68ch; }
+  p.note { color: var(--text-muted); font-size: 0.9rem; }
+
+  code, .mono { font-family: var(--font-mono); font-size: 0.86em; }
+  code {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    padding: 0.1em 0.4em;
+    border-radius: 5px;
+  }
+
+  .stat-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 14px; margin-top: 28px; }
+  .stat-tile {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 18px;
+    box-shadow: var(--shadow);
+  }
+  .stat-tile .value {
+    font-family: var(--font-display);
+    font-size: 1.7rem;
+    font-weight: 600;
+    color: var(--accent-strong);
+    font-variant-numeric: tabular-nums;
+  }
+  .stat-tile .label { font-size: 0.78rem; color: var(--text-muted); margin-top: 2px; }
+  .stat-tile.warn .value { color: var(--warn); }
+
+  figure { margin: 0; }
+  figure.diagram {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 22px;
+    box-shadow: var(--shadow);
+    overflow-x: auto;
+  }
+  figcaption { margin-top: 12px; font-size: 0.86rem; color: var(--text-muted); max-width: 68ch; }
+
+  .table-scroll { overflow-x: auto; border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow); }
+  table { border-collapse: collapse; width: 100%; min-width: 560px; font-size: 0.88rem; background: var(--surface); }
+  thead th {
+    text-align: left;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+    background: var(--surface-2);
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  tbody td { padding: 10px 14px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  tbody tr:last-child td { border-bottom: none; }
+  td.field { font-family: var(--font-mono); font-size: 0.85em; white-space: nowrap; }
+  td.restr { color: var(--text-muted); white-space: nowrap; }
+
+  .entity-head {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    margin: 32px 0 10px;
+  }
+  .entity-head h3 { margin: 0; }
+  .entity-head .pk-note { font-size: 0.78rem; color: var(--text-muted); }
+
+  .checklist { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
+  .checklist li {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    padding: 10px 14px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    font-size: 0.92rem;
+  }
+  .checklist .mark {
+    flex-shrink: 0;
+    width: 20px; height: 20px;
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.72rem;
+    margin-top: 1px;
+  }
+  .checklist li.done .mark { background: var(--accent-soft); color: var(--accent-strong); }
+  .checklist li.pending .mark { background: var(--warn-soft); color: var(--warn); }
+  .cols-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
+
+  @media (max-width: 880px) {
+    .layout { display: block; }
+    nav.toc { position: static; width: auto; height: auto; border-right: none; border-bottom: 1px solid var(--border); }
+    main { padding: 36px 24px 80px; }
+    .cols-2 { grid-template-columns: 1fr; }
+  }
+</style>
+
+<div class="layout">
+  <nav class="toc">
+    <span class="brand">ISAI</span>
+    <span class="brand-sub">Fase 3 · Análisis</span>
+    <ol>
+      <li><a href="#contexto">Contexto y problema</a></li>
+      <li><a href="#dfd0">DFD — Nivel 0</a></li>
+      <li><a href="#dfd1">DFD — Nivel 1</a></li>
+      <li><a href="#diccionario">Diccionario de datos</a></li>
+      <li><a href="#especificaciones">Especificaciones técnicas</a></li>
+      <li><a href="#avances">Resumen de avances</a></li>
+    </ol>
+  </nav>
+
+  <main>
+    <header class="cover">
+      <span class="eyebrow">Fase 3 · Informe de Análisis del Sistema</span>
+      <h1>Sistema de Gestión para Lavandería ISAI</h1>
+      <div class="cover-meta">
+        <span><strong>Cliente:</strong> Uriel Sierra — Cobán, Alta Verapaz</span>
+        <span><strong>Universidad:</strong> USAC — CUNOR</span>
+        <span><strong>Curso:</strong> Ingeniería en Ciencias y Sistemas · Software Avanzado</span>
+        <span><strong>Autor:</strong> Óscar Ozziel Yaxcal Leal — 202240349</span>
+      </div>
+    </header>
+
+    <section id="contexto">
+      <h2>1. Contexto y problema</h2>
+      <p class="section-intro">
+        ISAI opera con 2 personas y 8–12 pedidos diarios. Hoy cobra por tamaño de bolsa en lugar de por peso,
+        lo que produce cobros inconsistentes entre pedidos equivalentes y le cuesta hasta la mitad de su
+        ganancia mensual. El sistema estandariza el cobro con la fórmula <code>total = peso_libras × precio_por_libra</code>,
+        y añade control de insumos y respaldo digital de pedidos y facturas.
+      </p>
+      <div class="stat-row">
+        <div class="stat-tile"><div class="value">2</div><div class="label">empleados</div></div>
+        <div class="stat-tile"><div class="value">8–12</div><div class="label">pedidos / día</div></div>
+        <div class="stat-tile"><div class="value">~Q800</div><div class="label">ingreso mensual actual</div></div>
+        <div class="stat-tile warn"><div class="value">50%</div><div class="label">pérdida por cobro inconsistente</div></div>
+      </div>
+    </section>
+
+    <section id="dfd0">
+      <h2>2. Diagrama de Flujo de Datos — Nivel 0 (Contexto)</h2>
+      <p class="section-intro">
+        Ubica el sistema como una sola caja frente a las dos entidades externas con las que intercambia información:
+        el cliente que trae su ropa, y el operador que atiende el mostrador.
+      </p>
+      <figure class="diagram">
+<pre class="mermaid">
+flowchart LR
+  Cliente(["Cliente"])
+  Sistema[["Sistema ISAI<br/>Gestión de Lavandería"]]
+  Operador(["Operador / Encargado"])
+
+  Cliente -- "ropa a lavar, servicio solicitado" --> Sistema
+  Sistema -- "total a pagar, comprobante" --> Cliente
+  Operador -- "pedidos, insumos, credenciales" --> Sistema
+  Sistema -- "estado del pedido, alertas de stock, KPIs" --> Operador
+</pre>
+        <figcaption>Nivel 0: el sistema recibe la orden y el peso del cliente, y calcula/entrega el cobro; el operador alimenta pedidos e inventario y recibe alertas y reportes.</figcaption>
+      </figure>
+    </section>
+
+    <section id="dfd1">
+      <h2>3. Diagrama de Flujo de Datos — Nivel 1</h2>
+      <p class="section-intro">
+        Descompone el sistema en sus cuatro procesos (POS, Inventario, Facturación, Dashboard) y muestra en
+        qué almacén de datos lee o escribe cada uno.
+      </p>
+      <figure class="diagram">
+<pre class="mermaid">
+flowchart TB
+  Cliente(["Cliente"])
+  Operador(["Operador"])
+
+  P1((1.0 Registrar pedido))
+  P2((2.0 Controlar inventario))
+  P3((3.0 Generar factura))
+  P4((4.0 Consultar dashboard))
+
+  D1[("D1 clientes")]
+  D2[("D2 servicios")]
+  D3[("D3 pedidos")]
+  D4[("D4 insumos")]
+  D5[("D5 movimientos_insumo")]
+  D6[("D6 facturas")]
+
+  Cliente -- "peso, servicio" --> P1
+  Operador -- "datos del pedido" --> P1
+  P1 -- "lee tarifa" --> D2
+  P1 -- "alta/consulta" --> D1
+  P1 -- "escribe pedido" --> D3
+  P1 -- "total calculado" --> Cliente
+
+  Operador -- "entrada / salida" --> P2
+  P2 -- "lee cantidad actual" --> D4
+  P2 -- "escribe movimiento" --> D5
+  P2 -- "actualiza cantidad" --> D4
+  P2 -- "alerta stock bajo" --> Operador
+
+  Operador -- "solicita factura" --> P3
+  P3 -- "lee pedido" --> D3
+  P3 -- "escribe factura" --> D6
+  P3 -- "comprobante" --> Cliente
+
+  D3 -- "pedidos del día" --> P4
+  D4 -- "insumos en alerta" --> P4
+  P4 -- "KPIs" --> Operador
+</pre>
+        <figcaption>Nivel 1: cada proceso corresponde a un módulo del backend (pedidos, inventario, facturación, dashboard); los cilindros son las tablas de PostgreSQL definidas en <code>schema.prisma</code>.</figcaption>
+      </figure>
+      <p class="note">El proceso 1.0 no descuenta insumos de D4 todavía: el registro de un pedido y el control de inventario corren independientes en la implementación actual — ver pendientes en la sección 6.</p>
+    </section>
+
+    <section id="diccionario">
+      <h2>4. Diccionario de Datos</h2>
+      <p class="section-intro">
+        Extraído directamente de <code>backend/prisma/schema.prisma</code>, la fuente de verdad del modelo:
+        7 tablas en PostgreSQL, con nombres de columna en snake_case y validación de formato adicional en la API.
+      </p>
+
+      <div class="entity-head"><h3>4.1 usuarios</h3><span class="pk-note">personal autorizado para operar el sistema</span></div>
+      <div class="table-scroll"><table>
+        <thead><tr><th>Campo</th><th>Tipo</th><th>Restricción</th><th>Descripción</th></tr></thead>
+        <tbody>
+          <tr><td class="field">id</td><td class="mono">SERIAL</td><td class="restr">PK</td><td>Identificador único del usuario.</td></tr>
+          <tr><td class="field">nombre</td><td class="mono">VARCHAR(100)</td><td class="restr">NOT NULL</td><td>Nombre completo del empleado.</td></tr>
+          <tr><td class="field">usuario</td><td class="mono">VARCHAR(50)</td><td class="restr">UNIQUE, NOT NULL</td><td>Nombre de usuario para iniciar sesión.</td></tr>
+          <tr><td class="field">contrasena_hash</td><td class="mono">VARCHAR(255)</td><td class="restr">NOT NULL</td><td>Hash bcrypt de la contraseña; nunca se guarda en texto plano.</td></tr>
+          <tr><td class="field">rol</td><td class="mono">VARCHAR(20)</td><td class="restr">DEFAULT 'operador'</td><td>"administrador" u "operador".</td></tr>
+        </tbody>
+      </table></div>
+
+      <div class="entity-head"><h3>4.2 clientes</h3></div>
+      <div class="table-scroll"><table>
+        <thead><tr><th>Campo</th><th>Tipo</th><th>Restricción</th><th>Descripción</th></tr></thead>
+        <tbody>
+          <tr><td class="field">id</td><td class="mono">SERIAL</td><td class="restr">PK</td><td>Identificador único del cliente.</td></tr>
+          <tr><td class="field">nombre</td><td class="mono">VARCHAR(150)</td><td class="restr">NOT NULL</td><td>Nombre del cliente.</td></tr>
+          <tr><td class="field">telefono</td><td class="mono">VARCHAR(20)</td><td class="restr">—</td><td>Teléfono de contacto.</td></tr>
+          <tr><td class="field">correo</td><td class="mono">VARCHAR(150)</td><td class="restr">—</td><td>Correo electrónico (opcional).</td></tr>
+          <tr><td class="field">creado_en</td><td class="mono">TIMESTAMP</td><td class="restr">DEFAULT NOW()</td><td>Fecha de registro del cliente.</td></tr>
+        </tbody>
+      </table></div>
+
+      <div class="entity-head"><h3>4.3 servicios</h3><span class="pk-note">catálogo de servicios y tarifa por libra</span></div>
+      <div class="table-scroll"><table>
+        <thead><tr><th>Campo</th><th>Tipo</th><th>Restricción</th><th>Descripción</th></tr></thead>
+        <tbody>
+          <tr><td class="field">id</td><td class="mono">SERIAL</td><td class="restr">PK</td><td>Identificador único del servicio.</td></tr>
+          <tr><td class="field">nombre</td><td class="mono">VARCHAR(100)</td><td class="restr">NOT NULL</td><td>Ej. "Lavado y secado", "Planchado".</td></tr>
+          <tr><td class="field">precio_por_libra</td><td class="mono">DECIMAL(6,2)</td><td class="restr">NOT NULL</td><td>Tarifa estándar en quetzales por libra — resuelve el cobro inconsistente por bolsa.</td></tr>
+        </tbody>
+      </table></div>
+
+      <div class="entity-head"><h3>4.4 pedidos</h3><span class="pk-note">un registro por cada orden del POS</span></div>
+      <div class="table-scroll"><table>
+        <thead><tr><th>Campo</th><th>Tipo</th><th>Restricción</th><th>Descripción</th></tr></thead>
+        <tbody>
+          <tr><td class="field">id</td><td class="mono">SERIAL</td><td class="restr">PK</td><td>Identificador único del pedido.</td></tr>
+          <tr><td class="field">cliente_id</td><td class="mono">INTEGER</td><td class="restr">FK → clientes.id</td><td>Cliente asociado al pedido.</td></tr>
+          <tr><td class="field">servicio_id</td><td class="mono">INTEGER</td><td class="restr">FK → servicios.id</td><td>Servicio solicitado.</td></tr>
+          <tr><td class="field">peso_libras</td><td class="mono">DECIMAL(6,2)</td><td class="restr">NOT NULL</td><td>Peso real de la ropa, capturado en báscula.</td></tr>
+          <tr><td class="field">total</td><td class="mono">DECIMAL(8,2)</td><td class="restr">NOT NULL</td><td>Calculado por el sistema: <code>peso_libras × precio_por_libra</code>.</td></tr>
+          <tr><td class="field">estado</td><td class="mono">VARCHAR(30)</td><td class="restr">DEFAULT 'recibido'</td><td>recibido / en proceso / listo / entregado.</td></tr>
+          <tr><td class="field">metodo_pago</td><td class="mono">VARCHAR(30)</td><td class="restr">—</td><td>Efectivo, tarjeta o transferencia.</td></tr>
+          <tr><td class="field">creado_en</td><td class="mono">TIMESTAMP</td><td class="restr">DEFAULT NOW()</td><td>Fecha del pedido.</td></tr>
+        </tbody>
+      </table></div>
+
+      <div class="entity-head"><h3>4.5 insumos</h3><span class="pk-note">control de inventario</span></div>
+      <div class="table-scroll"><table>
+        <thead><tr><th>Campo</th><th>Tipo</th><th>Restricción</th><th>Descripción</th></tr></thead>
+        <tbody>
+          <tr><td class="field">id</td><td class="mono">SERIAL</td><td class="restr">PK</td><td>Identificador único del insumo.</td></tr>
+          <tr><td class="field">nombre</td><td class="mono">VARCHAR(100)</td><td class="restr">NOT NULL</td><td>Detergente, suavizante, bolsas, etc.</td></tr>
+          <tr><td class="field">cantidad_actual</td><td class="mono">DECIMAL(8,2)</td><td class="restr">DEFAULT 0</td><td>Cantidad disponible actualmente.</td></tr>
+          <tr><td class="field">unidad</td><td class="mono">VARCHAR(20)</td><td class="restr">NOT NULL</td><td>Unidad de medida (litros, unidades, etc.).</td></tr>
+          <tr><td class="field">stock_minimo</td><td class="mono">DECIMAL(8,2)</td><td class="restr">DEFAULT 0</td><td>Umbral que dispara la alerta de reabasto.</td></tr>
+        </tbody>
+      </table></div>
+
+      <div class="entity-head"><h3>4.6 movimientos_insumo</h3><span class="pk-note">bitácora de entradas y salidas</span></div>
+      <div class="table-scroll"><table>
+        <thead><tr><th>Campo</th><th>Tipo</th><th>Restricción</th><th>Descripción</th></tr></thead>
+        <tbody>
+          <tr><td class="field">id</td><td class="mono">SERIAL</td><td class="restr">PK</td><td>Identificador único del movimiento.</td></tr>
+          <tr><td class="field">insumo_id</td><td class="mono">INTEGER</td><td class="restr">FK → insumos.id</td><td>Insumo relacionado.</td></tr>
+          <tr><td class="field">tipo</td><td class="mono">VARCHAR(10)</td><td class="restr">NOT NULL</td><td>"entrada" o "salida".</td></tr>
+          <tr><td class="field">cantidad</td><td class="mono">DECIMAL(8,2)</td><td class="restr">NOT NULL</td><td>Cantidad que entra o sale.</td></tr>
+          <tr><td class="field">fecha</td><td class="mono">TIMESTAMP</td><td class="restr">DEFAULT NOW()</td><td>Fecha del movimiento.</td></tr>
+        </tbody>
+      </table></div>
+
+      <div class="entity-head"><h3>4.7 facturas</h3><span class="pk-note">comprobante generado por pedido</span></div>
+      <div class="table-scroll"><table>
+        <thead><tr><th>Campo</th><th>Tipo</th><th>Restricción</th><th>Descripción</th></tr></thead>
+        <tbody>
+          <tr><td class="field">id</td><td class="mono">SERIAL</td><td class="restr">PK</td><td>Identificador único de la factura.</td></tr>
+          <tr><td class="field">pedido_id</td><td class="mono">INTEGER</td><td class="restr">FK → pedidos.id, UNIQUE</td><td>Un pedido genera una sola factura.</td></tr>
+          <tr><td class="field">numero_factura</td><td class="mono">VARCHAR(20)</td><td class="restr">UNIQUE, NOT NULL</td><td>Correlativo generado por el sistema (ej. <code>F000001</code>).</td></tr>
+          <tr><td class="field">total</td><td class="mono">DECIMAL(8,2)</td><td class="restr">NOT NULL</td><td>Monto total facturado.</td></tr>
+          <tr><td class="field">fecha_emision</td><td class="mono">TIMESTAMP</td><td class="restr">DEFAULT NOW()</td><td>Fecha de emisión.</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="especificaciones">
+      <h2>5. Especificaciones Técnicas del Sistema</h2>
+      <p class="section-intro">Arquitectura de tres capas, todo en TypeScript, sobre las capas gratuitas de Vercel, Render y Neon.</p>
+
+      <h3>5.1 Arquitectura</h3>
+      <figure class="diagram">
+<pre class="mermaid">
+flowchart LR
+  subgraph FE["Frontend — React + Vite + TS"]
+    UI["Páginas: POS · Inventario · Facturación · Dashboard · Login"]
+  end
+  subgraph BE["Backend — Express + TS"]
+    API["Rutas → controladores → servicios"]
+    MW["Middleware requireAuth (JWT en cookie httpOnly)"]
+  end
+  DB[("PostgreSQL<br/>(Prisma ORM)")]
+
+  UI -- "fetch con credentials: include" --> MW
+  MW --> API
+  API -- "consultas tipadas" --> DB
+
+  FE -.->|deploy| Vercel(["Vercel"])
+  BE -.->|deploy| Render(["Render"])
+  DB -.->|hosting| Neon(["Neon"])
+</pre>
+        <figcaption>El frontend nunca habla con la base de datos directamente: toda escritura/lectura pasa por la API Express, que aplica autenticación y las reglas de negocio (cálculo de total, validación de stock).</figcaption>
+      </figure>
+
+      <h3>5.2 Stack tecnológico</h3>
+      <div class="table-scroll"><table>
+        <thead><tr><th>Capa</th><th>Tecnología</th><th>Hosting</th></tr></thead>
+        <tbody>
+          <tr><td>Frontend</td><td class="mono">React 19 + Vite + TypeScript + React Router</td><td>Vercel (free tier)</td></tr>
+          <tr><td>Backend</td><td class="mono">Node.js + Express + TypeScript</td><td>Render (free tier)</td></tr>
+          <tr><td>Base de datos</td><td class="mono">PostgreSQL 17</td><td>Neon (free tier) / local para desarrollo</td></tr>
+          <tr><td>ORM</td><td class="mono">Prisma</td><td>—</td></tr>
+          <tr><td>Autenticación</td><td class="mono">JWT (jsonwebtoken) + bcryptjs</td><td>—</td></tr>
+        </tbody>
+      </table></div>
+
+      <h3>5.3 Seguridad y autenticación</h3>
+      <p>
+        El login (<code>POST /api/auth/login</code>) verifica la contraseña con <code>bcrypt.compare</code> contra
+        <code>contrasena_hash</code> y responde con un JWT firmado (HS256, expira en 8h) guardado como cookie
+        <code>httpOnly</code>, <code>sameSite=lax</code> y <code>secure</code> en producción — nunca en
+        <code>localStorage</code>. El middleware <code>requireAuth</code> protege todas las rutas de negocio;
+        solo <code>/api/auth/*</code> queda abierto.
+      </p>
+
+      <h3>5.4 Módulos y endpoints</h3>
+      <div class="table-scroll"><table>
+        <thead><tr><th>Módulo</th><th>Endpoint</th><th>Función</th></tr></thead>
+        <tbody>
+          <tr><td>Auth</td><td class="mono">POST /api/auth/login</td><td>Inicia sesión, entrega cookie de sesión.</td></tr>
+          <tr><td>Auth</td><td class="mono">POST /api/auth/logout</td><td>Cierra sesión.</td></tr>
+          <tr><td>Auth</td><td class="mono">GET /api/auth/me</td><td>Usuario autenticado actual.</td></tr>
+          <tr><td>Pedidos (POS)</td><td class="mono">GET /api/pedidos</td><td>Lista pedidos con cliente y servicio.</td></tr>
+          <tr><td>Pedidos (POS)</td><td class="mono">POST /api/pedidos</td><td>Crea pedido; calcula <code>total</code> automáticamente.</td></tr>
+          <tr><td>Pedidos (POS)</td><td class="mono">PATCH /api/pedidos/:id/estado</td><td>Avanza el estado del pedido.</td></tr>
+          <tr><td>Inventario</td><td class="mono">GET /api/inventario/alertas</td><td>Insumos con stock ≤ mínimo.</td></tr>
+          <tr><td>Inventario</td><td class="mono">POST /api/inventario/movimientos</td><td>Entrada/salida; actualiza stock en una transacción.</td></tr>
+          <tr><td>Facturación</td><td class="mono">POST /api/facturacion</td><td>Genera factura y <code>numero_factura</code> desde un pedido.</td></tr>
+          <tr><td>Dashboard</td><td class="mono">GET /api/dashboard</td><td>Pedidos e ingresos del día, insumos en alerta.</td></tr>
+          <tr><td>Clientes / Servicios</td><td class="mono">GET, POST /api/clientes · /api/servicios</td><td>Catálogos usados por el POS.</td></tr>
+        </tbody>
+      </table></div>
+
+      <h3>5.5 Requisitos no funcionales cubiertos</h3>
+      <ul>
+        <li><strong>Seguridad:</strong> contraseñas con bcrypt, sesión JWT en cookie httpOnly, sin credenciales en el cliente.</li>
+        <li><strong>Consistencia:</strong> el descuento de stock corre en <code>prisma.$transaction</code>, bloqueando salidas que dejarían inventario negativo.</li>
+        <li><strong>Mantenibilidad:</strong> TypeScript de punta a punta, capas rutas → controladores → servicios separadas por módulo.</li>
+        <li><strong>Portabilidad:</strong> el mismo <code>schema.prisma</code> migra entre Postgres local y Neon sin cambiar código de la aplicación.</li>
+      </ul>
+    </section>
+
+    <section id="avances">
+      <h2>6. Resumen de avances</h2>
+      <p class="section-intro">Para la presentación del 9–11 de septiembre.</p>
+      <div class="cols-2">
+        <div>
+          <h3>Completado</h3>
+          <ul class="checklist">
+            <li class="done"><span class="mark">✓</span>Diseño y migración de las 7 tablas en PostgreSQL</li>
+            <li class="done"><span class="mark">✓</span>API REST completa: pedidos, inventario, facturación, dashboard, clientes, servicios</li>
+            <li class="done"><span class="mark">✓</span>Autenticación con JWT + bcrypt sobre las rutas de negocio</li>
+            <li class="done"><span class="mark">✓</span>Frontend con 5 páginas (Login, POS, Inventario, Facturación, Dashboard)</li>
+            <li class="done"><span class="mark">✓</span>Pruebas de extremo a extremo contra PostgreSQL local</li>
+          </ul>
+        </div>
+        <div>
+          <h3>Pendiente</h3>
+          <ul class="checklist">
+            <li class="pending"><span class="mark">→</span>Descuento automático de insumos al registrar un pedido</li>
+            <li class="pending"><span class="mark">→</span>Permisos por rol (administrador vs. operador) en el frontend</li>
+            <li class="pending"><span class="mark">→</span>Despliegue a Vercel / Render / Neon</li>
+            <li class="pending"><span class="mark">→</span>Reportes históricos más allá del día actual</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
