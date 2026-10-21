@@ -191,21 +191,20 @@ nav .app-credit {
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1.5px dashed var(--primary);
-  border-radius: 10px;
-  background: var(--primary-tint);
-  color: var(--primary-hover);
-  font-family: var(--font-display);
-  font-weight: 600;
-  letter-spacing: 0.02em;
+  border-radius: 50%;
+  overflow: hidden;
   flex-shrink: 0;
+}
+
+.logo-slot img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .logo-slot--sm {
   width: 42px;
   height: 42px;
-  font-size: 0.68rem;
-  border-radius: 9px;
 }
 
 .logo-slot--lg {
