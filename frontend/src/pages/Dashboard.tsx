@@ -416,7 +416,7 @@ export default function Dashboard() {
                 <li key={c.cliente}>
                   <div className="alert-item-main">
                     <div className="alert-item-title"><strong>Q{c.saldo.toFixed(2)}</strong> — {c.cliente}</div>
-                    <a className="alert-item-action" href="/pos">Cobrar</a>
+                    <a className="alert-item-action" href="/pedidos">Cobrar</a>
                   </div>
                   <div className="alert-meta">
                     {c.telefono} · desde hace{' '}

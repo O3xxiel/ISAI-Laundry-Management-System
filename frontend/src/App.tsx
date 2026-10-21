@@ -1,4 +1,4 @@
-import { Calculator, LayoutDashboard, Package, Receipt, ShoppingCart, Tags } from 'lucide-react';
+import { Calculator, ClipboardList, LayoutDashboard, Package, Receipt, ShoppingCart, Tags } from 'lucide-react';
 import { Navigate, NavLink, Route, Routes, useLocation } from 'react-router-dom';
 import { useAuth } from './auth';
 import Logo from './components/Logo';
@@ -7,6 +7,7 @@ import Dashboard from './pages/Dashboard';
 import Facturacion from './pages/Facturacion';
 import Inventario from './pages/Inventario';
 import Login from './pages/Login';
+import Pedidos from './pages/Pedidos';
 import Pos from './pages/Pos';
 import Servicios from './pages/Servicios';
 import Ticket from './pages/Ticket';
@@ -47,6 +48,7 @@ export default function App() {
           <div className="nav-links">
             <NavLink to="/" end><LayoutDashboard size={17} strokeWidth={1.75} /> Dashboard</NavLink>
             <NavLink to="/pos"><ShoppingCart size={17} strokeWidth={1.75} /> POS</NavLink>
+            <NavLink to="/pedidos"><ClipboardList size={17} strokeWidth={1.75} /> Pedidos</NavLink>
             <NavLink to="/inventario"><Package size={17} strokeWidth={1.75} /> Inventario</NavLink>
             <NavLink to="/servicios"><Tags size={17} strokeWidth={1.75} /> Servicios</NavLink>
             <NavLink to="/facturacion"><Receipt size={17} strokeWidth={1.75} /> Facturación</NavLink>
@@ -60,6 +62,7 @@ export default function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/" element={<RequireAuth><Dashboard /></RequireAuth>} />
           <Route path="/pos" element={<RequireAuth><Pos /></RequireAuth>} />
+          <Route path="/pedidos" element={<RequireAuth><Pedidos /></RequireAuth>} />
           <Route path="/inventario" element={<RequireAuth><Inventario /></RequireAuth>} />
           <Route path="/servicios" element={<RequireAuth><Servicios /></RequireAuth>} />
           <Route path="/facturacion" element={<RequireAuth><Facturacion /></RequireAuth>} />
