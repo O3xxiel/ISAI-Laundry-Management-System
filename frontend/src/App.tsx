@@ -55,6 +55,13 @@ export default function App() {
             <NavLink to="/caja"><Calculator size={17} strokeWidth={1.75} /> Caja</NavLink>
           </div>
           <button onClick={() => logout()}>Cerrar sesión</button>
+          <p className="app-credit">
+            Hecho por Ozziel Yaxcal Leal
+            <br />
+            Universidad de San Carlos de Guatemala — CUNOR
+            <br />
+            Software Avanzado
+          </p>
         </nav>
       )}
       <main>
