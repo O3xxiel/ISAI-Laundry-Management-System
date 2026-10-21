@@ -281,6 +281,13 @@ tbody tr:hover {
   background: var(--surface-2);
 }
 
+tfoot td {
+  background: var(--surface-2);
+  font-weight: 700;
+  border-bottom: none;
+  border-top: 1px solid var(--border);
+}
+
 /* ---------- Forms ---------- */
 
 .form-row {

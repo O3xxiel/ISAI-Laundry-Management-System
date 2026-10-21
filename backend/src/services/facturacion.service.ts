@@ -1,6 +1,8 @@
 import { prisma } from '../lib/prisma';
 
-const includePedido = { pedido: { include: { cliente: true, items: { include: { servicio: true } } } } } as const;
+const includePedido = {
+  pedido: { include: { cliente: true, items: { include: { servicio: true } }, pagos: true } },
+} as const;
 
 export function listarFacturas() {
   return prisma.factura.findMany({ include: includePedido, orderBy: { fechaEmision: 'desc' } });

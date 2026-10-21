@@ -1,5 +1,6 @@
+import { Printer } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { api } from '../api';
+import { api, saldoPendiente } from '../api';
 import type { Factura, Pedido } from '../api';
 import AlertCard from '../components/AlertCard';
 
@@ -17,6 +18,7 @@ export default function Facturacion() {
   useEffect(cargar, []);
 
   const pedidosSinFactura = pedidos.filter((p) => !facturas.some((f) => f.pedidoId === p.id));
+  const totalFacturado = facturas.reduce((acc, f) => acc + Number(f.total), 0);
 
   async function generarFactura(e: React.FormEvent) {
     e.preventDefault();
@@ -51,23 +53,43 @@ export default function Facturacion() {
       )}
       {error && <AlertCard>{error}</AlertCard>}
 
-      <table>
-        <thead>
-          <tr>
-            <th>No. Factura</th><th>Cliente</th><th>Total</th><th>Fecha</th>
-          </tr>
-        </thead>
-        <tbody>
-          {facturas.map((f) => (
-            <tr key={f.id}>
-              <td>{f.numeroFactura}</td>
-              <td>{f.pedido.cliente.nombre}</td>
-              <td>Q{f.total}</td>
-              <td>{new Date(f.fechaEmision).toLocaleString()}</td>
+      <div className="table-wrap">
+        <table className="pos-table">
+          <thead>
+            <tr>
+              <th>No. Factura</th><th>Cliente</th><th>Total</th><th>Estado</th><th>Fecha</th><th></th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {facturas.map((f) => {
+              const saldo = saldoPendiente(f.pedido);
+              return (
+                <tr key={f.id}>
+                  <td className="mono">{f.numeroFactura}</td>
+                  <td>{f.pedido.cliente.nombre}</td>
+                  <td>Q{f.total}</td>
+                  <td>
+                    {saldo > 0.001 ? <span className="badge-saldo">Q{saldo.toFixed(2)} pendiente</span> : <span className="badge-ok">Pagado</span>}
+                  </td>
+                  <td>{new Date(f.fechaEmision).toLocaleString()}</td>
+                  <td className="acciones-cell">
+                    <a className="btn-secondary btn-sm" href={`/ticket/${f.pedidoId}`} target="_blank" rel="noreferrer">
+                      <Printer size={14} /> Ver ticket
+                    </a>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+          <tfoot>
+            <tr>
+              <td colSpan={2}>Total</td>
+              <td className="servicio-precio-cell">Q{totalFacturado.toFixed(2)}</td>
+              <td></td><td></td><td></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
     </div>
   );
 }
