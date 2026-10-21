@@ -28,6 +28,7 @@ export interface Servicio {
   nombre: string;
   unidadCobro: UnidadCobro;
   precio: string;
+  activo: boolean;
 }
 
 export interface PedidoItem {
@@ -144,9 +145,14 @@ export const api = {
       request<Cliente>('/api/clientes', { method: 'POST', body: JSON.stringify(data) }),
   },
   servicios: {
-    listar: () => request<Servicio[]>('/api/servicios'),
+    listar: (incluirInactivos = false) =>
+      request<Servicio[]>(`/api/servicios${incluirInactivos ? '?incluirInactivos=1' : ''}`),
     crear: (data: { nombre: string; unidadCobro: UnidadCobro; precio: number }) =>
       request<Servicio>('/api/servicios', { method: 'POST', body: JSON.stringify(data) }),
+    actualizar: (id: number, data: { nombre?: string; unidadCobro?: UnidadCobro; precio?: number }) =>
+      request<Servicio>(`/api/servicios/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    cambiarEstado: (id: number, activo: boolean) =>
+      request<Servicio>(`/api/servicios/${id}/estado`, { method: 'PATCH', body: JSON.stringify({ activo }) }),
   },
   pedidos: {
     listar: () => request<Pedido[]>('/api/pedidos'),

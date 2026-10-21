@@ -2409,22 +2409,6 @@ button:disabled {
   font-size: 0.82rem;
 }
 
-/* ---- encabezado de la lista de pedidos ---- */
-
-.pos-pedidos-header {
-  margin-top: 1.5rem;
-}
-
-.pos-pedidos-title {
-  font-family: var(--font-display);
-  font-weight: 600;
-  font-size: 1.2rem;
-  margin: 0 0 0.85rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
 .count-badge {
   background: var(--surface-2);
   color: var(--text-muted);
@@ -2542,6 +2526,119 @@ button:disabled {
   padding-top: 0.75rem;
   padding-bottom: 0.75rem;
   min-height: 44px;
+}
+
+/* ---------- Catálogo de servicios ---------- */
+
+.servicio-grupo-row td {
+  background: var(--surface-2);
+  color: var(--text-muted);
+  font-weight: 700;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0.4rem 0.9rem;
+}
+
+.servicio-fila--inactivo td {
+  opacity: 0.55;
+}
+
+.servicio-badge-inactivo {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--text-muted);
+  background: var(--surface-2);
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+  margin-left: 0.5rem;
+}
+
+.servicio-precio-cell {
+  text-align: right;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.servicio-acciones-cell {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.3rem;
+  white-space: nowrap;
+}
+
+.servicio-hover-accion {
+  opacity: 0;
+  transition: opacity 0.1s;
+}
+
+tbody tr:hover .servicio-hover-accion {
+  opacity: 1;
+}
+
+.servicio-fila-form td {
+  background: var(--surface-2);
+}
+
+.servicio-fila-form input[type='text'] {
+  width: 100%;
+  font-family: var(--font-body);
+  padding: 0.5rem 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+}
+
+.servicio-form-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+.servicio-form-controls select {
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+}
+
+.servicio-precio-input {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.4rem 0.6rem;
+  background: var(--surface);
+  width: 100px;
+}
+
+.servicio-precio-input span {
+  color: var(--text-muted);
+}
+
+.servicio-precio-input input {
+  border: none;
+  outline: none;
+  width: 100%;
+  font-family: var(--font-body);
+  font-variant-numeric: tabular-nums;
+}
+
+.servicio-precio-input input::-webkit-outer-spin-button,
+.servicio-precio-input input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.servicio-precio-input input[type='number'] {
+  -moz-appearance: textfield;
 }
 
 .pos-table .acciones-cell {

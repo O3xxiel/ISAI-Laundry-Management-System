@@ -37,6 +37,7 @@ model Servicio {
   nombre      String       @db.VarChar(100)
   unidadCobro String       @map("unidad_cobro") @db.VarChar(10)
   precio      Decimal      @db.Decimal(6, 2)
+  activo      Boolean      @default(true)
   items       PedidoItem[]
 
   @@map("servicios")
