@@ -20,7 +20,7 @@
   --danger: #b91c1c;
   --danger-tint: #fee2e2;
   --muted-series: #b6c2c0;
-  --font-display: 'Fraunces', Georgia, serif;
+  --font-display: 'Inter', system-ui, -apple-system, sans-serif;
   --font-body: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
