@@ -9,13 +9,15 @@ datasource db {
 }
 
 model Usuario {
-  id             Int      @id @default(autoincrement())
-  nombre         String   @db.VarChar(100)
-  usuario        String   @unique @db.VarChar(50)
-  contrasenaHash String   @map("contrasena_hash") @db.VarChar(255)
-  rol            String   @default("operador") @db.VarChar(20)
-  pedidos        Pedido[]
-  movimientos    MovimientoInsumo[]
+  id              Int                @id @default(autoincrement())
+  nombre          String             @db.VarChar(100)
+  usuario         String             @unique @db.VarChar(50)
+  contrasenaHash  String             @map("contrasena_hash") @db.VarChar(255)
+  rol             String             @default("operador") @db.VarChar(20)
+  pedidos         Pedido[]
+  movimientos     MovimientoInsumo[]
+  cortesCaja      CorteCaja[]
+  movimientosCaja MovimientoCaja[]
 
   @@map("usuarios")
 }
@@ -112,6 +114,37 @@ model MovimientoInsumo {
   fecha     DateTime @default(now())
 
   @@map("movimientos_insumo")
+}
+
+// Un corte por día: se abre con un fondo inicial y un responsable, y se cierra con el
+// conteo real de efectivo (que revela si sobró o faltó contra lo esperado).
+model CorteCaja {
+  id            Int              @id @default(autoincrement())
+  fecha         String           @unique @db.VarChar(10)
+  fondoInicial  Decimal          @map("fondo_inicial") @db.Decimal(8, 2)
+  responsableId Int              @map("responsable_id")
+  responsable   Usuario          @relation(fields: [responsableId], references: [id])
+  abiertoEn     DateTime         @default(now()) @map("abierto_en")
+  conteoReal    Decimal?         @map("conteo_real") @db.Decimal(8, 2)
+  cerradoEn     DateTime?        @map("cerrado_en")
+  movimientos   MovimientoCaja[]
+
+  @@map("cortes_caja")
+}
+
+// Retiros o gastos pagados desde la caja (ej. comprar jabón) — se restan del efectivo esperado.
+model MovimientoCaja {
+  id          Int       @id @default(autoincrement())
+  corteCajaId Int       @map("corte_caja_id")
+  corteCaja   CorteCaja @relation(fields: [corteCajaId], references: [id])
+  tipo        String    @db.VarChar(10)
+  concepto    String    @db.VarChar(200)
+  monto       Decimal   @db.Decimal(8, 2)
+  usuarioId   Int?      @map("usuario_id")
+  usuario     Usuario?  @relation(fields: [usuarioId], references: [id])
+  fecha       DateTime  @default(now())
+
+  @@map("movimientos_caja")
 }
 
 model Factura {

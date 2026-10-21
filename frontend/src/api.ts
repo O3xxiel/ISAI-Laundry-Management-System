@@ -124,11 +124,38 @@ export interface Kpis {
   };
 }
 
-export interface CorteCaja {
+export interface MovimientoCorteCaja {
+  tipo: 'cobro' | 'retiro' | 'gasto';
+  concepto: string;
+  monto: number;
   fecha: string;
+  responsable?: string;
+}
+
+export interface CorteCaja {
+  id: number;
+  fecha: string;
+  fondoInicial: number;
+  responsable: string;
+  abiertoEn: string;
+  cerradoEn: string | null;
+  conteoReal: number | null;
+  diferencia: number | null;
   pedidosCreados: number;
   totalCobrado: number;
+  cobradoEfectivo: number;
+  totalRetiros: number;
+  efectivoEsperado: number;
   desglosePorMetodo: { metodo: MetodoPago; monto: number }[];
+  movimientos: MovimientoCorteCaja[];
+}
+
+export interface CorteCajaResumen {
+  id: number;
+  fecha: string;
+  responsable: string;
+  totalCobrado: number;
+  diferencia: number | null;
 }
 
 export function saldoPendiente(pedido: Pedido): number {
@@ -199,6 +226,13 @@ export const api = {
     obtener: () => request<Kpis>('/api/dashboard'),
   },
   caja: {
-    corte: (fecha?: string) => request<CorteCaja>(`/api/caja/corte${fecha ? `?fecha=${fecha}` : ''}`),
+    corte: (fecha?: string) => request<CorteCaja | null>(`/api/caja/corte${fecha ? `?fecha=${fecha}` : ''}`),
+    abrir: (fondoInicial: number) =>
+      request<CorteCaja>('/api/caja/abrir', { method: 'POST', body: JSON.stringify({ fondoInicial }) }),
+    registrarMovimiento: (corteId: number, data: { tipo: 'retiro' | 'gasto'; concepto: string; monto: number }) =>
+      request<CorteCaja>(`/api/caja/${corteId}/movimientos`, { method: 'POST', body: JSON.stringify(data) }),
+    cerrar: (corteId: number, conteoReal: number) =>
+      request<CorteCaja>(`/api/caja/${corteId}/cerrar`, { method: 'POST', body: JSON.stringify({ conteoReal }) }),
+    historial: () => request<CorteCajaResumen[]>('/api/caja/historial'),
   },
 };

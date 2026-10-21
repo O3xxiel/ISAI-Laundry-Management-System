@@ -925,6 +925,11 @@ button:disabled {
   font-weight: 700;
 }
 
+.text-danger {
+  color: var(--danger);
+  font-weight: 700;
+}
+
 .progress-bar {
   background: var(--surface-2);
   border-radius: 999px;
