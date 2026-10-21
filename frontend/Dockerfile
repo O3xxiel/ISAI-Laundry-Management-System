@@ -3,7 +3,9 @@ FROM node:22-alpine AS builder
 WORKDIR /app
 
 COPY package.json ./
-RUN npm install
+# --include=dev deja explícito que necesitamos devDependencies (vite, typescript)
+# para compilar, sin depender de que la plataforma de build no las omita.
+RUN npm install --include=dev
 
 COPY . .
 

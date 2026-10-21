@@ -6,7 +6,9 @@ WORKDIR /app
 RUN apk add --no-cache openssl
 
 COPY package.json ./
-RUN npm install
+# --include=dev deja explícito que necesitamos devDependencies (prisma CLI, typescript)
+# para generar y compilar, sin depender de que la plataforma de build no las omita.
+RUN npm install --include=dev
 
 COPY . .
 RUN npx prisma generate
