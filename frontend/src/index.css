@@ -381,9 +381,11 @@ button:disabled {
 .login-page {
   flex: 1;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: var(--bg);
+  background: radial-gradient(circle at 18% 15%, var(--primary-tint) 0%, var(--bg) 45%),
+    linear-gradient(165deg, var(--aqua-tint) 0%, var(--bg) 55%);
 }
 
 .login-form {
@@ -399,16 +401,25 @@ button:disabled {
   text-align: center;
 }
 
+.login-form .logo-slot--lg {
+  width: 104px;
+  height: 104px;
+  margin: 0 auto 1rem;
+}
+
 .login-form h1 {
   border-bottom: none;
   padding-bottom: 0;
   margin: 0;
   text-align: center;
+  font-size: 1.4rem;
+  color: var(--primary-hover);
 }
 
 .login-sub {
   color: var(--text-muted);
   font-size: 0.85rem;
+  font-weight: 400;
   margin: 0 0 0.5rem;
 }
 
@@ -421,11 +432,45 @@ button:disabled {
   text-align: left;
 }
 
+.login-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.login-input-wrap svg {
+  position: absolute;
+  left: 0.7rem;
+  color: var(--text-muted);
+  opacity: 0.6;
+  pointer-events: none;
+}
+
 .login-form input {
+  width: 100%;
   font-family: var(--font-body);
-  padding: 0.55rem 0.7rem;
+  padding: 0.55rem 0.7rem 0.55rem 2.15rem;
   border: 1px solid var(--border);
   border-radius: 7px;
+}
+
+.login-input-wrap .login-toggle-pw {
+  position: absolute;
+  right: 0.55rem;
+  left: auto;
+  display: flex;
+  background: none;
+  border: none;
+  padding: 0.2rem;
+  margin: 0;
+  color: var(--text-muted);
+  opacity: 0.6;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.login-input-wrap .login-toggle-pw:hover {
+  opacity: 1;
 }
 
 .login-form input:focus {
@@ -435,6 +480,10 @@ button:disabled {
 }
 
 .login-form button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
   font-family: var(--font-body);
   font-weight: 600;
   padding: 0.65rem;
@@ -448,6 +497,31 @@ button:disabled {
 
 .login-form button:hover {
   background: var(--primary-hover);
+}
+
+.login-form button:disabled {
+  opacity: 0.75;
+  cursor: default;
+}
+
+.login-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: login-spin 0.6s linear infinite;
+}
+
+@keyframes login-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.login-page .app-credit {
+  font-size: 0.62rem;
+  opacity: 0.45;
 }
 
 /* ---------- Tarjetas base (compartidas) ---------- */

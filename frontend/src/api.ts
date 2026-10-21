@@ -1,11 +1,16 @@
 const BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3001';
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
-  const res = await fetch(`${BASE_URL}${path}`, {
-    headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',
-    ...options,
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${BASE_URL}${path}`, {
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      ...options,
+    });
+  } catch {
+    throw new Error('No se pudo conectar con el servidor. Revisa tu conexión e intenta de nuevo.');
+  }
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
     throw new Error(body.error ?? `Error ${res.status}`);
