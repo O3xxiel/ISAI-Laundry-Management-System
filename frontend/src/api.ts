@@ -101,6 +101,14 @@ export interface Usuario {
   rol: string;
 }
 
+export interface Empleado {
+  id: number;
+  nombre: string;
+  usuario: string;
+  rol: string;
+  activo: boolean;
+}
+
 export interface Kpis {
   ventasHoy: number;
   cobradoHoy: number;
@@ -239,5 +247,14 @@ export const api = {
     cerrar: (corteId: number, conteoReal: number) =>
       request<CorteCaja>(`/api/caja/${corteId}/cerrar`, { method: 'POST', body: JSON.stringify({ conteoReal }) }),
     historial: () => request<CorteCajaResumen[]>('/api/caja/historial'),
+  },
+  usuarios: {
+    listar: () => request<Empleado[]>('/api/usuarios'),
+    crear: (data: { nombre: string; usuario: string; contrasena: string; rol: string }) =>
+      request<Empleado>('/api/usuarios', { method: 'POST', body: JSON.stringify(data) }),
+    actualizar: (id: number, data: { nombre?: string; rol?: string; contrasena?: string }) =>
+      request<Empleado>(`/api/usuarios/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    cambiarEstado: (id: number, activo: boolean) =>
+      request<Empleado>(`/api/usuarios/${id}/estado`, { method: 'PATCH', body: JSON.stringify({ activo }) }),
   },
 };

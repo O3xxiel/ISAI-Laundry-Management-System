@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { api } from '../api';
 import type { CorteCaja, CorteCajaResumen } from '../api';
 import AlertCard from '../components/AlertCard';
+import { useAuth } from '../auth';
 
 const ETIQUETA_METODO: Record<string, string> = {
   efectivo: 'Efectivo',
@@ -36,6 +37,8 @@ function textoDiferencia(d: number): string {
 }
 
 export default function Caja() {
+  const { usuario } = useAuth();
+  const esAdmin = usuario?.rol === 'admin';
   const [corte, setCorte] = useState<CorteCaja | null | undefined>(undefined);
   const [fondoInicial, setFondoInicial] = useState('');
   const [movAbierto, setMovAbierto] = useState(false);
@@ -235,14 +238,14 @@ export default function Caja() {
             )}
             {[...corte.movimientos].reverse().map((m, i) => (
               <tr key={i}>
-                <td>{formatoHora(m.fecha)}</td>
-                <td>
+                <td data-label="Hora">{formatoHora(m.fecha)}</td>
+                <td data-label="Tipo">
                   <span className={`status-pill ${m.tipo === 'cobro' ? 'status-pill--success' : 'status-pill--warning'}`}>
                     {ETIQUETA_TIPO_MOV[m.tipo]}
                   </span>
                 </td>
-                <td>{m.concepto}</td>
-                <td className={`servicio-precio-cell ${m.monto < 0 ? 'text-danger' : ''}`}>
+                <td data-label="Concepto">{m.concepto}</td>
+                <td className={`servicio-precio-cell ${m.monto < 0 ? 'text-danger' : ''}`} data-label="Monto">
                   {m.monto < 0 ? '-' : '+'}Q{Math.abs(m.monto).toFixed(2)}
                 </td>
               </tr>
@@ -252,25 +255,31 @@ export default function Caja() {
       </div>
 
       {!cerrada ? (
-        <section className="pos-card" style={{ maxWidth: 420, marginTop: '1.5rem' }}>
-          <h2 className="pos-card-title">Cerrar caja</h2>
-          <p className="section-muted">Cuenta el efectivo real en la gaveta e ingrésalo aquí.</p>
-          <label className="field">
-            <span className="field-label">Conteo real</span>
-            <div className="servicio-precio-input" style={{ width: '100%' }}>
-              <span>Q</span>
-              <input type="number" step="0.01" min="0" placeholder="0.00" value={conteoReal} onChange={(e) => setConteoReal(e.target.value)} />
-            </div>
-          </label>
-          {diferenciaPreview != null && (
-            <p className={claseDiferencia(diferenciaPreview)} style={{ marginTop: '0.5rem' }}>
-              Esperado Q{corte.efectivoEsperado.toFixed(2)} · {textoDiferencia(diferenciaPreview)}
-            </p>
-          )}
-          <button type="button" className="btn-primary" style={{ marginTop: '0.75rem' }} onClick={cerrarCaja} disabled={!conteoReal}>
-            Cerrar caja
-          </button>
-        </section>
+        esAdmin ? (
+          <section className="pos-card" style={{ maxWidth: 420, marginTop: '1.5rem' }}>
+            <h2 className="pos-card-title">Cerrar caja</h2>
+            <p className="section-muted">Cuenta el efectivo real en la gaveta e ingrésalo aquí.</p>
+            <label className="field">
+              <span className="field-label">Conteo real</span>
+              <div className="servicio-precio-input" style={{ width: '100%' }}>
+                <span>Q</span>
+                <input type="number" step="0.01" min="0" placeholder="0.00" value={conteoReal} onChange={(e) => setConteoReal(e.target.value)} />
+              </div>
+            </label>
+            {diferenciaPreview != null && (
+              <p className={claseDiferencia(diferenciaPreview)} style={{ marginTop: '0.5rem' }}>
+                Esperado Q{corte.efectivoEsperado.toFixed(2)} · {textoDiferencia(diferenciaPreview)}
+              </p>
+            )}
+            <button type="button" className="btn-primary" style={{ marginTop: '0.75rem' }} onClick={cerrarCaja} disabled={!conteoReal}>
+              Cerrar caja
+            </button>
+          </section>
+        ) : (
+          <p className="section-muted" style={{ marginTop: '1.5rem' }}>
+            Solo un administrador puede cerrar la caja (hacer el conteo real del día).
+          </p>
+        )
       ) : (
         <section className="pos-card" style={{ maxWidth: 420, marginTop: '1.5rem' }}>
           <h2 className="pos-card-title">Cierre</h2>
@@ -281,12 +290,14 @@ export default function Caja() {
         </section>
       )}
 
-      <h2 style={{ marginTop: '2rem' }}>
-        <button type="button" className="link-btn" onClick={toggleHistorial}>
-          {mostrarHistorial ? 'Ocultar historial de cortes' : 'Ver historial de cortes'}
-        </button>
-      </h2>
-      {mostrarHistorial && (
+      {esAdmin && (
+        <h2 style={{ marginTop: '2rem' }}>
+          <button type="button" className="link-btn" onClick={toggleHistorial}>
+            {mostrarHistorial ? 'Ocultar historial de cortes' : 'Ver historial de cortes'}
+          </button>
+        </h2>
+      )}
+      {esAdmin && mostrarHistorial && (
         <div className="table-wrap">
           <table className="pos-table">
             <thead>
@@ -300,10 +311,10 @@ export default function Caja() {
               ) : (
                 historial.map((h) => (
                   <tr key={h.id}>
-                    <td>{formatoFecha(new Date(h.fecha + 'T00:00:00'))}</td>
-                    <td>{h.responsable}</td>
-                    <td className="servicio-precio-cell">Q{h.totalCobrado.toFixed(2)}</td>
-                    <td className={claseDiferencia(h.diferencia)}>{h.diferencia != null ? textoDiferencia(h.diferencia) : '—'}</td>
+                    <td data-label="Fecha">{formatoFecha(new Date(h.fecha + 'T00:00:00'))}</td>
+                    <td data-label="Responsable">{h.responsable}</td>
+                    <td className="servicio-precio-cell" data-label="Cobrado">Q{h.totalCobrado.toFixed(2)}</td>
+                    <td className={claseDiferencia(h.diferencia)} data-label="Diferencia">{h.diferencia != null ? textoDiferencia(h.diferencia) : '—'}</td>
                   </tr>
                 ))
               )}

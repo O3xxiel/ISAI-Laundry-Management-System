@@ -11,7 +11,9 @@ import facturacionRouter from './routes/facturacion.routes';
 import inventarioRouter from './routes/inventario.routes';
 import pedidosRouter from './routes/pedidos.routes';
 import serviciosRouter from './routes/servicios.routes';
+import usuariosRouter from './routes/usuarios.routes';
 import { requireAuth } from './middleware/auth.middleware';
+import { requireRole } from './middleware/role.middleware';
 
 const app = express();
 app.use(cors({ origin: process.env.FRONTEND_URL ?? 'http://localhost:5173', credentials: true }));
@@ -22,13 +24,18 @@ app.get('/health', (_req, res) => res.json({ status: 'ok' }));
 
 app.use('/api/auth', authRouter);
 
+// Abiertos a cualquier rol autenticado: el núcleo del trabajo diario (POS/Pedidos) y
+// Facturación (solo consulta/imprimir, nada que un empleado no pueda hacer ya).
 app.use('/api/pedidos', requireAuth, pedidosRouter);
-app.use('/api/inventario', requireAuth, inventarioRouter);
 app.use('/api/facturacion', requireAuth, facturacionRouter);
-app.use('/api/dashboard', requireAuth, dashboardRouter);
 app.use('/api/clientes', requireAuth, clientesRouter);
 app.use('/api/servicios', requireAuth, serviciosRouter);
 app.use('/api/caja', requireAuth, cajaRouter);
+
+// Solo admin: catálogo/costos del negocio, cifras globales y gestión de usuarios.
+app.use('/api/inventario', requireAuth, requireRole('admin'), inventarioRouter);
+app.use('/api/dashboard', requireAuth, requireRole('admin'), dashboardRouter);
+app.use('/api/usuarios', requireAuth, requireRole('admin'), usuariosRouter);
 
 const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
   console.error(err);

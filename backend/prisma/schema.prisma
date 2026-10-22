@@ -8,12 +8,14 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
+// rol: 'admin' (acceso completo) o 'empleado' (POS, Pedidos y Facturación).
 model Usuario {
   id              Int                @id @default(autoincrement())
   nombre          String             @db.VarChar(100)
   usuario         String             @unique @db.VarChar(50)
   contrasenaHash  String             @map("contrasena_hash") @db.VarChar(255)
-  rol             String             @default("operador") @db.VarChar(20)
+  rol             String             @default("empleado") @db.VarChar(20)
+  activo          Boolean            @default(true)
   pedidos         Pedido[]
   movimientos     MovimientoInsumo[]
   cortesCaja      CorteCaja[]
