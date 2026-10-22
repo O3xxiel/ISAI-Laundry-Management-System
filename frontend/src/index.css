@@ -179,6 +179,9 @@ nav .app-credit {
     flex-shrink: 0;
     white-space: nowrap;
   }
+  nav .app-credit {
+    display: none;
+  }
   main {
     padding: 1.5rem 1.1rem 3rem;
   }
@@ -581,31 +584,29 @@ button:disabled {
   flex-wrap: wrap;
 }
 
-.range-pills {
+.fecha-rango {
   display: flex;
-  background: var(--surface-2);
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  padding: 0.2rem;
-  gap: 0.15rem;
+  align-items: flex-end;
+  gap: 0.6rem;
+  flex-wrap: wrap;
 }
 
-.range-pills button {
-  font-family: var(--font-body);
-  font-size: 0.8rem;
-  font-weight: 600;
+.fecha-rango label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  font-size: 0.75rem;
   color: var(--text-muted);
-  background: none;
-  border: none;
-  padding: 0.4rem 0.85rem;
-  border-radius: 999px;
-  cursor: pointer;
 }
 
-.range-pills button.active {
+.fecha-rango input[type='date'] {
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
   background: var(--surface);
-  color: var(--primary-hover);
-  box-shadow: 0 1px 2px rgba(16, 32, 31, 0.08);
+  color: var(--text);
 }
 
 .btn-primary {
@@ -1579,7 +1580,8 @@ button:disabled {
   color: var(--text);
 }
 
-.inv-toolbar > select {
+.inv-toolbar > select,
+.pos-toolbar > select {
   font-family: var(--font-body);
   font-size: 0.88rem;
   padding: 0.5rem 0.7rem;
@@ -1933,25 +1935,32 @@ button:disabled {
 
 /* ---- responsive: filas de tabla como tarjetas ---- */
 
-@media (max-width: 760px) {
-  .inv-table thead {
+@media (max-width: 780px) {
+  .inv-table thead,
+  .pos-table thead {
     display: none;
   }
 
   .inv-table,
   .inv-table tbody,
   .inv-table tr,
-  .inv-table td {
+  .inv-table td,
+  .pos-table,
+  .pos-table tbody,
+  .pos-table tr,
+  .pos-table td {
     display: block;
     width: 100%;
   }
 
-  .inv-table {
+  .inv-table,
+  .pos-table {
     border: none;
     background: none;
   }
 
-  .inv-table tr {
+  .inv-table tr,
+  .pos-table tr {
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 12px;
@@ -1959,7 +1968,8 @@ button:disabled {
     margin-bottom: 0.75rem;
   }
 
-  .inv-table td {
+  .inv-table td,
+  .pos-table td {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -1969,7 +1979,8 @@ button:disabled {
     text-align: right;
   }
 
-  .inv-table td::before {
+  .inv-table td::before,
+  .pos-table td::before {
     content: attr(data-label);
     font-size: 0.72rem;
     font-weight: 700;
@@ -1977,15 +1988,27 @@ button:disabled {
     letter-spacing: 0.03em;
     color: var(--text-muted);
     text-align: left;
+    margin-right: 0.75rem;
   }
 
   .inv-table .qty-cell {
     align-items: flex-end;
   }
 
-  .inv-table .row-actions {
+  .inv-table .row-actions,
+  .pos-table .acciones-cell,
+  .pos-table .servicio-acciones-cell {
     justify-content: flex-end;
     flex-wrap: wrap;
+  }
+
+  .pos-table tfoot tr {
+    background: var(--surface-2);
+    border-radius: 12px;
+  }
+
+  .pos-table-tfoot-spacer {
+    display: none;
   }
 }
 
@@ -2679,6 +2702,13 @@ tbody tr:hover .servicio-hover-accion {
   opacity: 1;
 }
 
+/* sin mouse (táctil) no hay :hover que las revele — deben verse siempre */
+@media (hover: none) {
+  .servicio-hover-accion {
+    opacity: 1;
+  }
+}
+
 .servicio-fila-form td {
   background: var(--surface-2);
 }
@@ -2755,4 +2785,19 @@ tbody tr:hover .servicio-hover-accion {
   border-radius: 7px;
   text-decoration: none;
   cursor: pointer;
+}
+
+/* ---------- Paginación ---------- */
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.85rem;
+  margin: 1rem 0;
+}
+
+.pagination-label {
+  font-size: 0.85rem;
+  color: var(--text-muted);
 }

@@ -208,11 +208,11 @@ export default function Servicios() {
                       <FilaForm key={s.id} valor={edit} onChange={setEdit} onGuardar={guardarEdicion} onCancelar={() => setEditandoId(null)} autoFocus />
                     ) : (
                       <tr key={s.id} className={!s.activo ? 'servicio-fila--inactivo' : ''}>
-                        <td>
+                        <td data-label="Servicio">
                           {s.nombre}
                           {!s.activo && <span className="servicio-badge-inactivo">Desactivado</span>}
                         </td>
-                        <td className="servicio-precio-cell">
+                        <td className="servicio-precio-cell" data-label="Precio">
                           Q{Number(s.precio).toFixed(2)}
                           {UNIDAD_SUFIJO[s.unidadCobro] && <span className="cell-muted"> {UNIDAD_SUFIJO[s.unidadCobro]}</span>}
                         </td>
