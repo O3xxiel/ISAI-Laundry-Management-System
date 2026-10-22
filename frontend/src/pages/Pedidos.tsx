@@ -3,10 +3,12 @@ import { useEffect, useState } from 'react';
 import { api, saldoPendiente } from '../api';
 import type { MetodoPago, Pedido } from '../api';
 import AlertCard from '../components/AlertCard';
+import Pagination from '../components/Pagination';
 import { folio, waLink } from '../utils';
 
 const ESTADOS = ['recibido', 'en proceso', 'listo', 'entregado'];
 const METODOS: MetodoPago[] = ['efectivo', 'tarjeta', 'transferencia'];
+const POR_PAGINA = 15;
 type FiltroEstado = 'todos' | 'en proceso' | 'listo' | 'atrasado' | 'entregado';
 
 function esAtrasado(p: Pedido): boolean {
@@ -21,6 +23,9 @@ export default function Pedidos() {
   const [montoCobro, setMontoCobro] = useState('');
   const [metodoCobro, setMetodoCobro] = useState<MetodoPago>('efectivo');
   const [error, setError] = useState('');
+  const [pagina, setPagina] = useState(1);
+  const [desde, setDesde] = useState('');
+  const [hasta, setHasta] = useState('');
 
   function cargar() {
     api.pedidos.listar().then(setPedidos);
@@ -51,24 +56,36 @@ export default function Pedidos() {
     }
   }
 
-  const pedidosFiltrados = pedidos.filter((p) => {
+  const pedidosEnRango = pedidos.filter((p) => {
     if (busqueda.trim()) {
       const q = busqueda.trim().toLowerCase();
       const coincide = String(p.id).includes(q) || p.cliente.nombre.toLowerCase().includes(q) || p.cliente.telefono.includes(q);
       if (!coincide) return false;
     }
+    const fecha = p.creadoEn.slice(0, 10);
+    if (desde && fecha < desde) return false;
+    if (hasta && fecha > hasta) return false;
+    return true;
+  });
+
+  const pedidosFiltrados = pedidosEnRango.filter((p) => {
     if (filtroEstado === 'todos') return true;
     if (filtroEstado === 'atrasado') return esAtrasado(p);
     return p.estado === filtroEstado;
   });
 
   const conteoFiltros = {
-    todos: pedidos.length,
-    'en proceso': pedidos.filter((p) => p.estado === 'en proceso').length,
-    listo: pedidos.filter((p) => p.estado === 'listo').length,
-    atrasado: pedidos.filter(esAtrasado).length,
-    entregado: pedidos.filter((p) => p.estado === 'entregado').length,
+    todos: pedidosEnRango.length,
+    'en proceso': pedidosEnRango.filter((p) => p.estado === 'en proceso').length,
+    listo: pedidosEnRango.filter((p) => p.estado === 'listo').length,
+    atrasado: pedidosEnRango.filter(esAtrasado).length,
+    entregado: pedidosEnRango.filter((p) => p.estado === 'entregado').length,
   };
+
+  useEffect(() => setPagina(1), [busqueda, filtroEstado, desde, hasta]);
+
+  const totalPaginas = Math.max(1, Math.ceil(pedidosFiltrados.length / POR_PAGINA));
+  const pedidosPagina = pedidosFiltrados.slice((pagina - 1) * POR_PAGINA, pagina * POR_PAGINA);
 
   return (
     <div>
@@ -86,7 +103,7 @@ export default function Pedidos() {
           <Search size={16} strokeWidth={1.8} />
           <input type="text" placeholder="Buscar por folio, nombre o teléfono..." value={busqueda} onChange={(e) => setBusqueda(e.target.value)} />
         </div>
-        <div className="filter-pills">
+        <select value={filtroEstado} onChange={(e) => setFiltroEstado(e.target.value as FiltroEstado)}>
           {([
             ['todos', 'Todos'],
             ['en proceso', 'En proceso'],
@@ -94,16 +111,25 @@ export default function Pedidos() {
             ['atrasado', 'Atrasados'],
             ['entregado', 'Entregados'],
           ] as [FiltroEstado, string][]).map(([valor, etiqueta]) => (
-            <button
-              key={valor}
-              type="button"
-              className={`filter-pill filter-pill--${valor} ${filtroEstado === valor ? 'filter-pill--active' : ''}`}
-              onClick={() => setFiltroEstado(valor)}
-            >
-              {etiqueta} <span className="filter-pill-count">{conteoFiltros[valor]}</span>
-            </button>
+            <option key={valor} value={valor}>{etiqueta} ({conteoFiltros[valor]})</option>
           ))}
-        </div>
+        </select>
+      </div>
+
+      <div className="fecha-rango" style={{ marginBottom: '1rem' }}>
+        <label>
+          Desde
+          <input type="date" value={desde} max={hasta || undefined} onChange={(e) => setDesde(e.target.value)} />
+        </label>
+        <label>
+          Hasta
+          <input type="date" value={hasta} min={desde || undefined} onChange={(e) => setHasta(e.target.value)} />
+        </label>
+        {(desde || hasta) && (
+          <button type="button" className="link-btn" onClick={() => { setDesde(''); setHasta(''); }}>
+            Limpiar
+          </button>
+        )}
       </div>
 
       <div className="table-wrap">
@@ -114,19 +140,19 @@ export default function Pedidos() {
             </tr>
           </thead>
           <tbody>
-            {pedidosFiltrados.map((p) => {
+            {pedidosPagina.map((p) => {
               const saldo = saldoPendiente(p);
               return (
                 <tr key={p.id}>
-                  <td className="mono">{folio(p.id)}</td>
-                  <td>{p.cliente.nombre}<br /><span className="cell-muted">{p.cliente.telefono}</span></td>
-                  <td>{p.items.map((it) => it.servicio.nombre).join(', ')}</td>
-                  <td>Q{p.total}</td>
-                  <td>
+                  <td className="mono" data-label="Folio">{folio(p.id)}</td>
+                  <td data-label="Cliente">{p.cliente.nombre}<br /><span className="cell-muted">{p.cliente.telefono}</span></td>
+                  <td data-label="Servicios">{p.items.map((it) => it.servicio.nombre).join(', ')}</td>
+                  <td data-label="Total">Q{p.total}</td>
+                  <td data-label="Saldo">
                     {saldo > 0.001 ? <span className="badge-saldo">Q{saldo.toFixed(2)}</span> : <span className="badge-ok">al día</span>}
                   </td>
-                  <td>{p.fechaPromesa ? new Date(p.fechaPromesa).toLocaleString() : '—'}</td>
-                  <td>
+                  <td data-label="Entrega">{p.fechaPromesa ? new Date(p.fechaPromesa).toLocaleString() : '—'}</td>
+                  <td data-label="Estado">
                     <select
                       className={`estado-select estado-select--${p.estado.replace(' ', '-')}`}
                       value={p.estado}
@@ -181,6 +207,7 @@ export default function Pedidos() {
           </tbody>
         </table>
       </div>
+      <Pagination pagina={pagina} totalPaginas={totalPaginas} onCambiar={setPagina} />
     </div>
   );
 }
