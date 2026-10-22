@@ -1,15 +1,11 @@
 import {
   AlertTriangle,
-  ArrowDown,
-  ArrowUp,
   CheckCircle2,
   Clock,
-  Droplets,
   Inbox,
   Package,
   Plus,
   Receipt,
-  TrendingUp,
   Wallet,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -42,7 +38,10 @@ function VentasChart({ data }: { data: { fecha: string; ventas: number }[] }) {
   const h = 200;
   const padBottom = 28;
   const padTop = 26;
-  const gap = 14;
+  // Con un rango de fechas amplio hay muchas barras; menos separación y sin texto fijo
+  // (que se amontonaría), el detalle de cada barra sigue disponible al pasar el mouse.
+  const denso = data.length > 14;
+  const gap = data.length > 40 ? 1 : denso ? 3 : 14;
   const barWidth = (w - gap * (data.length - 1)) / data.length;
   const scale = (v: number) => ((h - padBottom - padTop) * v) / max;
   const avgY = h - padBottom - scale(promedio);
@@ -74,12 +73,16 @@ function VentasChart({ data }: { data: { fecha: string; ventas: number }[] }) {
                 className="chart-bar"
                 opacity={esHoy ? 1 : 0.55}
               />
-              <text x={x + barWidth / 2} y={y - 6} textAnchor="middle" className="chart-value-label">
-                {d.ventas > 0 ? Math.round(d.ventas) : ''}
-              </text>
-              <text x={x + barWidth / 2} y={h - 10} textAnchor="middle" className="chart-axis-label">
-                {dia}
-              </text>
+              {!denso && (
+                <>
+                  <text x={x + barWidth / 2} y={y - 6} textAnchor="middle" className="chart-value-label">
+                    {d.ventas > 0 ? Math.round(d.ventas) : ''}
+                  </text>
+                  <text x={x + barWidth / 2} y={h - 10} textAnchor="middle" className="chart-axis-label">
+                    {dia}
+                  </text>
+                </>
+              )}
             </g>
           );
         })}
@@ -186,7 +189,7 @@ function Donut({ data }: { data: { metodo: string; monto: number }[] }) {
   let offset = 0;
 
   if (total <= 0) {
-    return <p className="section-muted">Todavía no se ha cobrado nada hoy.</p>;
+    return <p className="section-muted">Todavía no se ha cobrado nada en este periodo.</p>;
   }
 
   return (
@@ -256,17 +259,22 @@ function DashboardSkeleton() {
   );
 }
 
+function formatoFechaCorta(fecha: string): string {
+  return new Date(`${fecha}T00:00:00`).toLocaleDateString('es-GT', { day: 'numeric', month: 'short' });
+}
+
 export default function Dashboard() {
   const [kpis, setKpis] = useState<Kpis | null>(null);
-  const [rango, setRango] = useState<'hoy' | '7d' | '30d'>('hoy');
+  const [desde, setDesde] = useState('');
+  const [hasta, setHasta] = useState('');
 
   useEffect(() => {
-    api.dashboard.obtener().then(setKpis);
-  }, []);
+    api.dashboard.obtener(desde || undefined, hasta || undefined).then(setKpis);
+  }, [desde, hasta]);
 
   if (!kpis) return <DashboardSkeleton />;
 
-  const deltaVentas = kpis.ventasAyer > 0 ? ((kpis.ventasHoy - kpis.ventasAyer) / kpis.ventasAyer) * 100 : null;
+  const filtroActivo = Boolean(desde || hasta);
   const maxServicio = Math.max(1, ...kpis.ventasPorServicio.map((s) => s.monto));
   const maxConsumo = Math.max(1, ...kpis.consumoInsumos.map((s) => s.cantidad));
 
@@ -275,12 +283,20 @@ export default function Dashboard() {
       <div className="dashboard-header">
         <h1>Dashboard</h1>
         <div className="dashboard-header-actions">
-          <div className="range-pills">
-            {(['hoy', '7d', '30d'] as const).map((r) => (
-              <button key={r} className={rango === r ? 'active' : ''} onClick={() => setRango(r)}>
-                {r === 'hoy' ? 'Hoy' : r === '7d' ? '7 días' : '30 días'}
+          <div className="fecha-rango">
+            <label>
+              Desde
+              <input type="date" value={desde} max={hasta || undefined} onChange={(e) => setDesde(e.target.value)} />
+            </label>
+            <label>
+              Hasta
+              <input type="date" value={hasta} min={desde || undefined} onChange={(e) => setHasta(e.target.value)} />
+            </label>
+            {filtroActivo && (
+              <button type="button" className="link-btn" onClick={() => { setDesde(''); setHasta(''); }}>
+                Limpiar
               </button>
-            ))}
+            )}
           </div>
           <a className="btn-primary" href="/pos">
             <Plus size={16} strokeWidth={2} /> Nueva orden
@@ -288,27 +304,19 @@ export default function Dashboard() {
         </div>
       </div>
 
+      <p className="section-muted">
+        {filtroActivo
+          ? `Mostrando del ${formatoFechaCorta(kpis.periodo.desde)} al ${formatoFechaCorta(kpis.periodo.hasta)}`
+          : 'Mostrando hoy'}
+      </p>
+
       {/* Cómo voy hoy */}
       <div className="kpi-row">
         <div className="kpi-card">
           <div className="kpi-top">
-            <span className="kpi-icon"><TrendingUp size={22} strokeWidth={1.6} /></span>
-          </div>
-          <span className="kpi-label">Facturado hoy</span>
-          <span className="kpi-value">Q{kpis.ventasHoy.toFixed(2)}</span>
-          {deltaVentas != null && (
-            <span className={`kpi-delta-pill ${deltaVentas >= 0 ? 'kpi-delta-pill--up' : 'kpi-delta-pill--down'}`}>
-              {deltaVentas >= 0 ? <ArrowUp size={12} strokeWidth={2.5} /> : <ArrowDown size={12} strokeWidth={2.5} />}
-              {Math.abs(deltaVentas).toFixed(0)}% vs ayer
-            </span>
-          )}
-        </div>
-
-        <div className="kpi-card">
-          <div className="kpi-top">
             <span className="kpi-icon"><Wallet size={22} strokeWidth={1.6} /></span>
           </div>
-          <span className="kpi-label">Cobrado hoy</span>
+          <span className="kpi-label">Cobrado</span>
           <span className="kpi-value">Q{kpis.cobradoHoy.toFixed(2)}</span>
         </div>
 
@@ -335,14 +343,6 @@ export default function Dashboard() {
           <span className="kpi-label">Saldo pendiente</span>
           <span className="kpi-value">Q{kpis.saldoPendienteTotal.toFixed(2)}</span>
           <span className="kpi-sub">de {kpis.alertas.clientesConSaldo.length} cliente{kpis.alertas.clientesConSaldo.length === 1 ? '' : 's'}</span>
-        </div>
-
-        <div className="kpi-card">
-          <div className="kpi-top">
-            <span className="kpi-icon"><Droplets size={22} strokeWidth={1.6} /></span>
-          </div>
-          <span className="kpi-label">Libras lavadas hoy</span>
-          <span className="kpi-value">{kpis.kilosHoy.toFixed(1)}</span>
         </div>
       </div>
 
@@ -463,7 +463,7 @@ export default function Dashboard() {
       <h2>Tendencia</h2>
       <div className="charts-grid">
         <div className="chart-card">
-          <h3 className="chart-title">Ventas — últimos 7 días</h3>
+          <h3 className="chart-title">Ventas</h3>
           <VentasChart data={kpis.tendenciaVentas} />
         </div>
 
@@ -473,7 +473,7 @@ export default function Dashboard() {
         </div>
 
         <div className="chart-card">
-          <h3 className="chart-title">Ventas por servicio — últimos 30 días</h3>
+          <h3 className="chart-title">Ventas por servicio</h3>
           <div className="barra-h-list">
             {kpis.ventasPorServicio.slice(0, 6).map((s) => (
               <BarraHorizontal key={s.servicio} label={s.servicio} valor={s.monto} max={maxServicio} formato={(v) => `Q${v.toFixed(0)}`} />
@@ -482,19 +482,19 @@ export default function Dashboard() {
         </div>
 
         <div className="chart-card">
-          <h3 className="chart-title">Ventas por hora — últimos 7 días</h3>
+          <h3 className="chart-title">Ventas por hora</h3>
           <HorasChart data={kpis.ventasPorHora} />
         </div>
 
         <div className="chart-card">
-          <h3 className="chart-title">Cobrado hoy por método de pago</h3>
+          <h3 className="chart-title">Cobrado por método de pago</h3>
           <Donut data={kpis.cobradoPorMetodo} />
         </div>
 
         <div className="chart-card">
-          <h3 className="chart-title">Consumo de insumos — últimos 7 días</h3>
+          <h3 className="chart-title">Consumo de insumos</h3>
           {kpis.consumoInsumos.length === 0 ? (
-            <p className="section-muted">Sin salidas de inventario esta semana.</p>
+            <p className="section-muted">Sin salidas de inventario en este periodo.</p>
           ) : (
             <div className="barra-h-list">
               {kpis.consumoInsumos.map((c) => (

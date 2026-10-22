@@ -103,13 +103,12 @@ export interface Usuario {
 
 export interface Kpis {
   ventasHoy: number;
-  ventasAyer: number;
   cobradoHoy: number;
   cobradoPorMetodo: { metodo: MetodoPago; monto: number }[];
   pedidosRecibidosHoy: number;
   pedidosPorEntregarHoy: number;
   saldoPendienteTotal: number;
-  kilosHoy: number;
+  periodo: { desde: string; hasta: string };
   insumosBajos: number;
   detalleInsumosBajos: Insumo[];
   ordenesPorEstado: { estado: string; cantidad: number }[];
@@ -223,7 +222,13 @@ export const api = {
       request<Factura>('/api/facturacion', { method: 'POST', body: JSON.stringify({ pedidoId }) }),
   },
   dashboard: {
-    obtener: () => request<Kpis>('/api/dashboard'),
+    obtener: (desde?: string, hasta?: string) => {
+      const params = new URLSearchParams();
+      if (desde) params.set('desde', desde);
+      if (hasta) params.set('hasta', hasta);
+      const qs = params.toString();
+      return request<Kpis>(`/api/dashboard${qs ? `?${qs}` : ''}`);
+    },
   },
   caja: {
     corte: (fecha?: string) => request<CorteCaja | null>(`/api/caja/corte${fecha ? `?fecha=${fecha}` : ''}`),
