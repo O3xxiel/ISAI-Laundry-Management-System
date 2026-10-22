@@ -10,7 +10,7 @@ export const COOKIE_OPTIONS: CookieOptions = {
   httpOnly: true,
   sameSite: 'lax',
   secure: process.env.NODE_ENV === 'production',
-  maxAge: 8 * 60 * 60 * 1000,
+  maxAge: 60 * 60 * 1000,
 };
 
 export interface TokenPayload {
@@ -20,7 +20,7 @@ export interface TokenPayload {
 }
 
 export function firmarToken(payload: TokenPayload) {
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: '8h' });
+  return jwt.sign(payload, JWT_SECRET, { expiresIn: '1h' });
 }
 
 export function verificarToken(token: string): TokenPayload {
