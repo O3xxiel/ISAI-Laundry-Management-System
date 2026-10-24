@@ -10,8 +10,16 @@ function rangoDia(fecha: Date) {
   return { inicio, fin };
 }
 
+// 'YYYY-MM-DD' del día local. No usar toISOString(): convierte a UTC y puede cambiar de día.
 function fechaISO(fecha: Date) {
-  return rangoDia(fecha).inicio.toISOString().slice(0, 10);
+  const dos = (n: number) => String(n).padStart(2, '0');
+  return `${fecha.getFullYear()}-${dos(fecha.getMonth() + 1)}-${dos(fecha.getDate())}`;
+}
+
+// new Date('YYYY-MM-DD') se interpreta como medianoche UTC (en Guatemala, las 6 pm del día
+// anterior); con la hora explícita se interpreta como medianoche local.
+export function fechaLocal(fechaStr: string) {
+  return new Date(`${fechaStr}T00:00:00`);
 }
 
 async function construirCorte(corte: {
@@ -24,7 +32,7 @@ async function construirCorte(corte: {
   conteoReal: unknown;
   cerradoEn: Date | null;
 }) {
-  const { inicio, fin } = rangoDia(new Date(corte.fecha));
+  const { inicio, fin } = rangoDia(fechaLocal(corte.fecha));
 
   const [pagos, pedidosCreados, movimientos] = await Promise.all([
     prisma.pago.findMany({

@@ -4,7 +4,7 @@ import * as cajaService from '../services/caja.service';
 const TIPOS_VALIDOS = ['retiro', 'gasto'];
 
 export async function corte(req: Request, res: Response) {
-  const fecha = req.query.fecha ? new Date(String(req.query.fecha)) : new Date();
+  const fecha = req.query.fecha ? cajaService.fechaLocal(String(req.query.fecha)) : new Date();
   const resultado = await cajaService.obtenerCorte(fecha);
   if (!resultado) return res.json(null);
   res.json(resultado);
