@@ -448,7 +448,7 @@ button:disabled {
   align-items: center;
 }
 
-.login-input-wrap svg {
+.login-input-wrap > svg {
   position: absolute;
   left: 0.7rem;
   color: var(--text-muted);
@@ -477,6 +477,10 @@ button:disabled {
   opacity: 0.6;
   cursor: pointer;
   pointer-events: auto;
+}
+
+.login-input-wrap:has(.login-toggle-pw) input {
+  padding-right: 2.3rem;
 }
 
 .login-input-wrap .login-toggle-pw:hover {
