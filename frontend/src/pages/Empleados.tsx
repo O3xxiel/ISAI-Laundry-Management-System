@@ -1,4 +1,4 @@
-import { Pencil, Plus, Power, X } from 'lucide-react';
+import { Pencil, Plus, Power, Search, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { api } from '../api';
 import type { Empleado } from '../api';
@@ -88,6 +88,8 @@ export default function Empleados() {
   const [editandoId, setEditandoId] = useState<number | null>(null);
   const [edit, setEdit] = useState<FormEmpleado>(FORM_VACIO);
   const [error, setError] = useState('');
+  const [busqueda, setBusqueda] = useState('');
+  const [mostrarInactivos, setMostrarInactivos] = useState(false);
 
   function cargar() {
     api.usuarios.listar().then(setEmpleados);
@@ -144,13 +146,32 @@ export default function Empleados() {
     }
   }
 
+  const q = busqueda.trim().toLowerCase();
+  const visibles = empleados.filter((e) => {
+    if (!mostrarInactivos && !e.activo) return false;
+    if (q && !e.nombre.toLowerCase().includes(q) && !e.usuario.toLowerCase().includes(q)) return false;
+    return true;
+  });
+  const inactivosCount = empleados.filter((e) => !e.activo).length;
+
   return (
     <div>
-      <div className="dashboard-header">
-        <h1>Empleados</h1>
+      <h1>Empleados</h1>
+
+      <div className="inv-toolbar">
+        <div className="inv-search">
+          <Search size={16} strokeWidth={1.8} />
+          <input type="text" placeholder="Buscar empleado..." value={busqueda} onChange={(e) => setBusqueda(e.target.value)} />
+        </div>
+        <div className="inv-toolbar-spacer" />
+        {inactivosCount > 0 && (
+          <button type="button" className="link-btn" onClick={() => setMostrarInactivos((v) => !v)}>
+            {mostrarInactivos ? 'Ocultar desactivados' : `Mostrar desactivados (${inactivosCount})`}
+          </button>
+        )}
         {!nuevoAbierto && (
-          <button type="button" className="btn-primary" onClick={() => setNuevoAbierto(true)}>
-            <Plus size={16} /> Nuevo empleado
+          <button type="button" className="btn-primary btn-sm" onClick={() => setNuevoAbierto(true)}>
+            <Plus size={15} /> Nuevo empleado
           </button>
         )}
       </div>
@@ -168,7 +189,7 @@ export default function Empleados() {
             {nuevoAbierto && (
               <FilaForm valor={nuevo} onChange={setNuevo} onGuardar={crear} onCancelar={() => { setNuevoAbierto(false); setNuevo(FORM_VACIO); }} autoFocus />
             )}
-            {empleados.map((e) =>
+            {visibles.map((e) =>
               editandoId === e.id ? (
                 <FilaForm key={e.id} valor={edit} onChange={setEdit} onGuardar={guardarEdicion} onCancelar={() => setEditandoId(null)} esEdicion autoFocus />
               ) : (
@@ -198,6 +219,11 @@ export default function Empleados() {
                   </td>
                 </tr>
               ),
+            )}
+            {visibles.length === 0 && !nuevoAbierto && (
+              <tr>
+                <td colSpan={4} className="section-muted">No hay empleados que coincidan con la búsqueda.</td>
+              </tr>
             )}
           </tbody>
         </table>
