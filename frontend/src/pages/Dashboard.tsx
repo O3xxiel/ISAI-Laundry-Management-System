@@ -246,7 +246,7 @@ function DashboardSkeleton() {
         <h1>Dashboard</h1>
       </div>
       <div className="kpi-row">
-        {Array.from({ length: 6 }).map((_, i) => (
+        {Array.from({ length: 4 }).map((_, i) => (
           <div key={i} className="skeleton skeleton-kpi" />
         ))}
       </div>
