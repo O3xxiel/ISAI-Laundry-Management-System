@@ -71,7 +71,7 @@ export async function historialDeInsumo(insumoId: number) {
   const insumo = await prisma.insumo.findUniqueOrThrow({ where: { id: insumoId } });
   const movimientos = await prisma.movimientoInsumo.findMany({
     where: { insumoId },
-    include: { usuario: true },
+    include: { usuario: { select: { id: true, nombre: true } } },
     orderBy: { fecha: 'desc' },
   });
 
