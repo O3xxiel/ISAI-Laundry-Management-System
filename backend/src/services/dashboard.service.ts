@@ -2,6 +2,8 @@ import { prisma } from '../lib/prisma';
 
 const DIAS_SIN_RECOGER_ALERTA = 2;
 const ESTADOS_ABIERTOS = ['recibido', 'en proceso', 'listo'];
+// Un pedido cancelado no es venta ni deuda: se excluye de montos, saldos y alertas.
+const NO_CANCELADO = { estado: { not: 'cancelado' } };
 
 function rangoDia(offsetDias = 0) {
   const inicio = new Date();
@@ -34,13 +36,13 @@ async function tarjetas(periodo: { inicio: Date; fin: Date }) {
   const hoy = rangoDia(0);
 
   const [pedidosPeriodo, pagosPeriodo, pedidosPorEntregarHoy, totalPedidosAgg, totalPagosAgg] = await Promise.all([
-    prisma.pedido.findMany({ where: { creadoEn: { gte: periodo.inicio, lt: periodo.fin } }, select: { total: true } }),
+    prisma.pedido.findMany({ where: { ...NO_CANCELADO, creadoEn: { gte: periodo.inicio, lt: periodo.fin } }, select: { total: true } }),
     prisma.pago.findMany({ where: { fecha: { gte: periodo.inicio, lt: periodo.fin } } }),
     prisma.pedido.count({
-      where: { fechaPromesa: { gte: hoy.inicio, lt: hoy.fin }, estado: { not: 'entregado' } },
+      where: { fechaPromesa: { gte: hoy.inicio, lt: hoy.fin }, estado: { notIn: ['entregado', 'cancelado'] } },
     }),
-    prisma.pedido.aggregate({ _sum: { total: true } }),
-    prisma.pago.aggregate({ _sum: { monto: true } }),
+    prisma.pedido.aggregate({ where: NO_CANCELADO, _sum: { total: true } }),
+    prisma.pago.aggregate({ where: { pedido: NO_CANCELADO }, _sum: { monto: true } }),
   ]);
 
   const cobradoPorMetodo = new Map<string, number>();
@@ -85,7 +87,7 @@ async function tendenciaVentas(periodo: { inicio: Date; fin: Date }) {
   const params = rangos.flatMap((r) => [r.inicio, r.fin]);
 
   const [fila] = await prisma.$queryRawUnsafe<Record<string, string | null>[]>(
-    `SELECT ${columnas} FROM pedidos`,
+    `SELECT ${columnas} FROM pedidos WHERE estado <> 'cancelado'`,
     ...params,
   );
 
@@ -97,7 +99,7 @@ async function tendenciaVentas(periodo: { inicio: Date; fin: Date }) {
 
 async function ventasPorServicio(periodo: { inicio: Date; fin: Date }) {
   const items = await prisma.pedidoItem.findMany({
-    where: { pedido: { creadoEn: { gte: periodo.inicio, lt: periodo.fin } } },
+    where: { pedido: { ...NO_CANCELADO, creadoEn: { gte: periodo.inicio, lt: periodo.fin } } },
     include: { servicio: true },
   });
   const porServicio = new Map<string, number>();
@@ -109,7 +111,7 @@ async function ventasPorServicio(periodo: { inicio: Date; fin: Date }) {
 
 async function ventasPorHora(periodo: { inicio: Date; fin: Date }) {
   const pedidos = await prisma.pedido.findMany({
-    where: { creadoEn: { gte: periodo.inicio, lt: periodo.fin } },
+    where: { ...NO_CANCELADO, creadoEn: { gte: periodo.inicio, lt: periodo.fin } },
     select: { total: true, creadoEn: true },
   });
   const porHora = new Array(24).fill(0);
@@ -153,6 +155,7 @@ async function clientesConSaldo(ahora: Date) {
     LEFT JOIN (
       SELECT pedido_id, SUM(monto) AS monto FROM pagos GROUP BY pedido_id
     ) pg ON pg.pedido_id = p.id
+    WHERE p.estado <> 'cancelado'
     GROUP BY c.id, c.nombre, c.telefono
     HAVING (SUM(p.total) - COALESCE(SUM(pg.monto), 0)) > 0.001
     ORDER BY "masAntiguo" ASC
@@ -173,7 +176,7 @@ async function alertas() {
 
   const [atrasados, listosSinRecoger, saldoCliente, insumos] = await Promise.all([
     prisma.pedido.findMany({
-      where: { fechaPromesa: { lt: ahora }, estado: { notIn: ['listo', 'entregado'] } },
+      where: { fechaPromesa: { lt: ahora }, estado: { notIn: ['listo', 'entregado', 'cancelado'] } },
       include: { cliente: true },
       orderBy: { fechaPromesa: 'asc' },
     }),

@@ -6,13 +6,14 @@ import AlertCard from '../components/AlertCard';
 import Pagination from '../components/Pagination';
 import { folio, waLink } from '../utils';
 
-const ESTADOS = ['recibido', 'en proceso', 'listo', 'entregado'];
+const ESTADOS = ['recibido', 'en proceso', 'listo', 'entregado', 'cancelado'];
+const ESTADOS_FINALES = ['entregado', 'cancelado'];
 const METODOS: MetodoPago[] = ['efectivo', 'tarjeta', 'transferencia'];
 const POR_PAGINA = 15;
-type FiltroEstado = 'todos' | 'en proceso' | 'listo' | 'atrasado' | 'entregado';
+type FiltroEstado = 'todos' | 'en proceso' | 'listo' | 'atrasado' | 'entregado' | 'cancelado';
 
 function esAtrasado(p: Pedido): boolean {
-  return p.estado !== 'listo' && p.estado !== 'entregado' && !!p.fechaPromesa && new Date(p.fechaPromesa) < new Date();
+  return !['listo', ...ESTADOS_FINALES].includes(p.estado) && !!p.fechaPromesa && new Date(p.fechaPromesa) < new Date();
 }
 
 export default function Pedidos() {
@@ -34,6 +35,12 @@ export default function Pedidos() {
   useEffect(cargar, []);
 
   async function cambiarEstado(id: number, estado: string) {
+    if (
+      estado === 'cancelado' &&
+      !window.confirm(`¿Cancelar el pedido ${folio(id)}? Ya no se podrá cambiar su estado ni cobrar. Si el cliente pagó algo y se le devuelve, regístralo como retiro en Caja.`)
+    ) {
+      return;
+    }
     setError('');
     try {
       await api.pedidos.actualizarEstado(id, estado);
@@ -80,6 +87,7 @@ export default function Pedidos() {
     listo: pedidosEnRango.filter((p) => p.estado === 'listo').length,
     atrasado: pedidosEnRango.filter(esAtrasado).length,
     entregado: pedidosEnRango.filter((p) => p.estado === 'entregado').length,
+    cancelado: pedidosEnRango.filter((p) => p.estado === 'cancelado').length,
   };
 
   useEffect(() => setPagina(1), [busqueda, filtroEstado, desde, hasta]);
@@ -110,6 +118,7 @@ export default function Pedidos() {
             ['listo', 'Listos'],
             ['atrasado', 'Atrasados'],
             ['entregado', 'Entregados'],
+            ['cancelado', 'Cancelados'],
           ] as [FiltroEstado, string][]).map(([valor, etiqueta]) => (
             <option key={valor} value={valor}>{etiqueta} ({conteoFiltros[valor]})</option>
           ))}
@@ -141,7 +150,8 @@ export default function Pedidos() {
           </thead>
           <tbody>
             {pedidosPagina.map((p) => {
-              const saldo = saldoPendiente(p);
+              const cancelado = p.estado === 'cancelado';
+              const saldo = cancelado ? 0 : saldoPendiente(p);
               return (
                 <tr key={p.id}>
                   <td className="mono" data-label="Folio">{folio(p.id)}</td>
@@ -149,15 +159,27 @@ export default function Pedidos() {
                   <td data-label="Servicios">{p.items.map((it) => it.servicio.nombre).join(', ')}</td>
                   <td data-label="Total">Q{p.total}</td>
                   <td data-label="Saldo">
-                    {saldo > 0.001 ? <span className="badge-saldo">Q{saldo.toFixed(2)}</span> : <span className="badge-ok">al día</span>}
+                    {cancelado ? (
+                      <span className="cell-muted">—</span>
+                    ) : saldo > 0.001 ? (
+                      <span className="badge-saldo">Q{saldo.toFixed(2)}</span>
+                    ) : (
+                      <span className="badge-ok">al día</span>
+                    )}
                   </td>
                   <td data-label="Entrega">{p.fechaPromesa ? new Date(p.fechaPromesa).toLocaleString() : '—'}</td>
                   <td data-label="Estado">
                     <select
                       className={`estado-select estado-select--${p.estado.replace(' ', '-')}`}
                       value={p.estado}
-                      disabled={p.estado === 'entregado'}
-                      title={p.estado === 'entregado' ? 'Ya fue entregado, no se puede cambiar' : undefined}
+                      disabled={ESTADOS_FINALES.includes(p.estado)}
+                      title={
+                        p.estado === 'entregado'
+                          ? 'Ya fue entregado, no se puede cambiar'
+                          : cancelado
+                            ? 'Fue cancelado, no se puede cambiar'
+                            : undefined
+                      }
                       onChange={(e) => cambiarEstado(p.id, e.target.value)}
                     >
                       {ESTADOS.map((estado) => (

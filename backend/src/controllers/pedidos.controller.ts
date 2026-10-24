@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import * as cajaService from '../services/caja.service';
 import * as pedidosService from '../services/pedidos.service';
 
-const ESTADOS_VALIDOS = ['recibido', 'en proceso', 'listo', 'entregado'];
+const ESTADOS_VALIDOS = ['recibido', 'en proceso', 'listo', 'entregado', 'cancelado'];
 const METODOS_VALIDOS = ['efectivo', 'tarjeta', 'transferencia'];
 
 export async function listar(_req: Request, res: Response) {
@@ -55,7 +55,7 @@ export async function actualizarEstado(req: Request, res: Response) {
   if (!ESTADOS_VALIDOS.includes(estado)) {
     return res.status(400).json({ error: `Estado inválido. Usa uno de: ${ESTADOS_VALIDOS.join(', ')}` });
   }
-  res.json(await pedidosService.actualizarEstadoPedido(Number(req.params.id), estado));
+  res.json(await pedidosService.actualizarEstadoPedido(Number(req.params.id), estado, req.usuario?.id));
 }
 
 export async function pagar(req: Request, res: Response) {

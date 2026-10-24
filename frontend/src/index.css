@@ -1239,6 +1239,14 @@ button:disabled {
   border-radius: 999px;
 }
 
+.badge-anulada {
+  background: var(--danger-tint);
+  color: var(--danger);
+  font-size: 0.82rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+}
+
 .acciones-cell {
   display: flex;
   flex-direction: column;
@@ -2641,6 +2649,12 @@ button:disabled {
   border-color: var(--success);
   background: var(--success-tint);
   color: var(--success);
+}
+
+.estado-select--cancelado {
+  border-color: var(--danger);
+  background: var(--danger-tint);
+  color: var(--danger);
 }
 
 /* ---- tabla de pedidos: filas más altas para tablet/touch ---- */

@@ -31,7 +31,9 @@ export default function Facturacion() {
     if (hasta && fecha > hasta) return false;
     return true;
   });
-  const totalFacturado = facturasFiltradas.reduce((acc, f) => acc + Number(f.total), 0);
+  const totalFacturado = facturasFiltradas
+    .filter((f) => f.pedido.estado !== 'cancelado')
+    .reduce((acc, f) => acc + Number(f.total), 0);
   const totalPaginas = Math.max(1, Math.ceil(facturasFiltradas.length / POR_PAGINA));
   const facturasPagina = facturasFiltradas.slice((pagina - 1) * POR_PAGINA, pagina * POR_PAGINA);
 
@@ -100,7 +102,13 @@ export default function Facturacion() {
                   <td data-label="Cliente">{f.pedido.cliente.nombre}</td>
                   <td data-label="Total">Q{f.total}</td>
                   <td data-label="Estado">
-                    {saldo > 0.001 ? <span className="badge-saldo">Q{saldo.toFixed(2)} pendiente</span> : <span className="badge-ok">Pagado</span>}
+                    {f.pedido.estado === 'cancelado' ? (
+                      <span className="badge-anulada">Anulada</span>
+                    ) : saldo > 0.001 ? (
+                      <span className="badge-saldo">Q{saldo.toFixed(2)} pendiente</span>
+                    ) : (
+                      <span className="badge-ok">Pagado</span>
+                    )}
                   </td>
                   <td data-label="Fecha">{new Date(f.fechaEmision).toLocaleString()}</td>
                   <td className="acciones-cell">

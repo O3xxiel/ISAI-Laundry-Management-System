@@ -97,23 +97,42 @@ export async function crearPedido(data: {
   });
 }
 
-export async function actualizarEstadoPedido(id: number, estado: string) {
+export async function actualizarEstadoPedido(id: number, estado: string, usuarioId?: number) {
   const pedido = await prisma.pedido.findUniqueOrThrow({ where: { id }, include: { pagos: true } });
   if (pedido.estado === 'entregado') {
     throw new Error('Este pedido ya fue entregado; su estado no se puede volver a cambiar.');
+  }
+  if (pedido.estado === 'cancelado') {
+    throw new Error('Este pedido fue cancelado; su estado no se puede volver a cambiar.');
   }
   if (estado === 'entregado' && saldoPendiente(pedido) > 0.001) {
     throw new Error('Este pedido tiene saldo pendiente; cóbralo antes de marcarlo como entregado.');
   }
 
-  return prisma.pedido.update({
-    where: { id },
-    data: { estado, listoEn: estado === 'listo' ? new Date() : undefined },
-    include: INCLUDE,
+  return prisma.$transaction(async (tx) => {
+    // Si se cancela antes de empezar a lavarlo, los insumos no se llegaron a usar: se devuelven.
+    if (estado === 'cancelado' && pedido.estado === 'recibido') {
+      const nota = `Pedido #${String(id).padStart(6, '0')}`;
+      const consumos = await tx.movimientoInsumo.findMany({ where: { tipo: 'salida', nota } });
+      for (const c of consumos) {
+        await tx.insumo.update({ where: { id: c.insumoId }, data: { cantidadActual: { increment: c.cantidad } } });
+        await tx.movimientoInsumo.create({
+          data: { insumoId: c.insumoId, usuarioId, tipo: 'entrada', motivo: 'Devolución', nota: `${nota} cancelado`, cantidad: c.cantidad },
+        });
+      }
+    }
+
+    return tx.pedido.update({
+      where: { id },
+      data: { estado, listoEn: estado === 'listo' ? new Date() : undefined },
+      include: INCLUDE,
+    });
   });
 }
 
 export async function registrarPago(pedidoId: number, data: PagoInicialInput) {
+  const pedido = await prisma.pedido.findUniqueOrThrow({ where: { id: pedidoId } });
+  if (pedido.estado === 'cancelado') throw new Error('Este pedido fue cancelado; no se le pueden registrar pagos.');
   await prisma.pago.create({ data: { pedidoId, ...data } });
   return obtenerPedido(pedidoId);
 }
