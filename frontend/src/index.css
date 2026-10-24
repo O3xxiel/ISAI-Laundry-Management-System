@@ -2801,3 +2801,61 @@ tbody tr:hover .servicio-hover-accion {
   font-size: 0.85rem;
   color: var(--text-muted);
 }
+
+/* Receta de insumos de un servicio */
+.servicio-receta-fila td {
+  padding-top: 0;
+}
+
+.servicio-receta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.servicio-receta-titulo {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+
+.servicio-receta-linea {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.servicio-receta-linea select,
+.servicio-receta-linea input {
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  padding: 0.45rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+}
+
+.servicio-receta-linea select {
+  min-width: 200px;
+}
+
+.servicio-receta-linea input {
+  width: 100px;
+  font-variant-numeric: tabular-nums;
+}
+
+.servicio-receta .link-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.servicio-receta-resumen {
+  font-size: 0.78rem;
+  margin-top: 0.15rem;
+}
+

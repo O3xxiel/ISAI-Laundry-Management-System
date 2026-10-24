@@ -1,7 +1,7 @@
 import { Pencil, Plus, Power, Search, X } from 'lucide-react';
 import { Fragment, useEffect, useState } from 'react';
 import { api } from '../api';
-import type { Servicio, UnidadCobro } from '../api';
+import type { Insumo, InsumoReceta, Servicio, UnidadCobro } from '../api';
 import AlertCard from '../components/AlertCard';
 
 const GRUPOS: { value: UnidadCobro; label: string }[] = [
@@ -16,28 +16,57 @@ const UNIDAD_SUFIJO: Record<UnidadCobro, string> = {
   fijo: '',
 };
 
+const POR_UNIDAD: Record<UnidadCobro, string> = {
+  peso: 'por libra',
+  pieza: 'por pieza',
+  fijo: 'por servicio',
+};
+
+interface LineaReceta {
+  insumoId: string;
+  cantidad: string;
+}
+
 interface FormServicio {
   nombre: string;
   unidadCobro: UnidadCobro;
   precio: string;
+  receta: LineaReceta[];
 }
 
-const FORM_VACIO: FormServicio = { nombre: '', unidadCobro: 'peso', precio: '' };
+const FORM_VACIO: FormServicio = { nombre: '', unidadCobro: 'peso', precio: '', receta: [] };
+
+function recetaValida(receta: LineaReceta[]) {
+  return receta.every((l) => l.insumoId && Number(l.cantidad) > 0);
+}
+
+function aReceta(receta: LineaReceta[]): InsumoReceta[] {
+  return receta.map((l) => ({ insumoId: Number(l.insumoId), cantidad: Number(l.cantidad) }));
+}
 
 function FilaForm({
   valor,
   onChange,
   onGuardar,
   onCancelar,
+  insumos,
   autoFocus,
 }: {
   valor: FormServicio;
   onChange: (v: FormServicio) => void;
   onGuardar: () => void;
   onCancelar: () => void;
+  insumos: Insumo[];
   autoFocus?: boolean;
 }) {
+  const valido = valor.nombre.trim() && valor.precio && recetaValida(valor.receta);
+
+  function cambiarLinea(idx: number, cambio: Partial<LineaReceta>) {
+    onChange({ ...valor, receta: valor.receta.map((l, i) => (i === idx ? { ...l, ...cambio } : l)) });
+  }
+
   return (
+    <>
     <tr className="servicio-fila-form">
       <td>
         <input
@@ -66,7 +95,7 @@ function FilaForm({
               onChange={(e) => onChange({ ...valor, precio: e.target.value })}
             />
           </div>
-          <button type="button" className="btn-primary btn-sm" onClick={onGuardar} disabled={!valor.nombre.trim() || !valor.precio}>
+          <button type="button" className="btn-primary btn-sm" onClick={onGuardar} disabled={!valido}>
             Guardar
           </button>
           <button type="button" className="icon-btn" onClick={onCancelar} aria-label="Cancelar">
@@ -75,6 +104,54 @@ function FilaForm({
         </div>
       </td>
     </tr>
+    <tr className="servicio-fila-form servicio-receta-fila">
+      <td colSpan={3}>
+        <div className="servicio-receta">
+          <span className="servicio-receta-titulo">Insumos que consume ({POR_UNIDAD[valor.unidadCobro]})</span>
+          {valor.receta.map((linea, idx) => {
+            const insumo = insumos.find((i) => String(i.id) === linea.insumoId);
+            const usados = valor.receta.filter((_, i) => i !== idx).map((l) => l.insumoId);
+            return (
+              <div key={idx} className="servicio-receta-linea">
+                <select value={linea.insumoId} onChange={(e) => cambiarLinea(idx, { insumoId: e.target.value })}>
+                  <option value="">Elige un insumo…</option>
+                  {insumos.map((i) => (
+                    <option key={i.id} value={i.id} disabled={usados.includes(String(i.id))}>{i.nombre}</option>
+                  ))}
+                </select>
+                <input
+                  type="number"
+                  step="0.001"
+                  min="0"
+                  placeholder="0.00"
+                  value={linea.cantidad}
+                  onChange={(e) => cambiarLinea(idx, { cantidad: e.target.value })}
+                />
+                <span className="cell-muted">{insumo?.unidad ?? ''}</span>
+                <button
+                  type="button"
+                  className="icon-btn"
+                  onClick={() => onChange({ ...valor, receta: valor.receta.filter((_, i) => i !== idx) })}
+                  aria-label="Quitar insumo"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            );
+          })}
+          {valor.receta.length < insumos.length && (
+            <button
+              type="button"
+              className="link-btn"
+              onClick={() => onChange({ ...valor, receta: [...valor.receta, { insumoId: '', cantidad: '' }] })}
+            >
+              <Plus size={14} /> Agregar insumo
+            </button>
+          )}
+        </div>
+      </td>
+    </tr>
+    </>
   );
 }
 
@@ -87,17 +164,26 @@ export default function Servicios() {
   const [editandoId, setEditandoId] = useState<number | null>(null);
   const [edit, setEdit] = useState<FormServicio>(FORM_VACIO);
   const [error, setError] = useState('');
+  const [insumos, setInsumos] = useState<Insumo[]>([]);
 
   function cargar() {
     api.servicios.listar(true).then(setServicios);
   }
 
   useEffect(cargar, []);
+  useEffect(() => {
+    api.inventario.listar().then(setInsumos);
+  }, []);
 
   async function crear() {
     setError('');
     try {
-      await api.servicios.crear({ nombre: nuevo.nombre.trim(), unidadCobro: nuevo.unidadCobro, precio: Number(nuevo.precio) });
+      await api.servicios.crear({
+        nombre: nuevo.nombre.trim(),
+        unidadCobro: nuevo.unidadCobro,
+        precio: Number(nuevo.precio),
+        insumos: aReceta(nuevo.receta),
+      });
       setNuevo(FORM_VACIO);
       setNuevoAbierto(false);
       cargar();
@@ -108,7 +194,12 @@ export default function Servicios() {
 
   function abrirEdicion(s: Servicio) {
     setEditandoId(s.id);
-    setEdit({ nombre: s.nombre, unidadCobro: s.unidadCobro, precio: s.precio });
+    setEdit({
+      nombre: s.nombre,
+      unidadCobro: s.unidadCobro,
+      precio: s.precio,
+      receta: s.insumos.map((r) => ({ insumoId: String(r.insumoId), cantidad: String(Number(r.cantidad)) })),
+    });
   }
 
   async function guardarEdicion() {
@@ -119,6 +210,7 @@ export default function Servicios() {
         nombre: edit.nombre.trim(),
         unidadCobro: edit.unidadCobro,
         precio: Number(edit.precio),
+        insumos: aReceta(edit.receta),
       });
       setEditandoId(null);
       cargar();
@@ -190,7 +282,7 @@ export default function Servicios() {
           </thead>
           <tbody>
             {nuevoAbierto && (
-              <FilaForm valor={nuevo} onChange={setNuevo} onGuardar={crear} onCancelar={() => { setNuevoAbierto(false); setNuevo(FORM_VACIO); }} autoFocus />
+              <FilaForm valor={nuevo} onChange={setNuevo} onGuardar={crear} onCancelar={() => { setNuevoAbierto(false); setNuevo(FORM_VACIO); }} insumos={insumos} autoFocus />
             )}
 
             {GRUPOS.map((grupo) => {
@@ -205,12 +297,17 @@ export default function Servicios() {
                   </tr>
                   {items.map((s) =>
                     editandoId === s.id ? (
-                      <FilaForm key={s.id} valor={edit} onChange={setEdit} onGuardar={guardarEdicion} onCancelar={() => setEditandoId(null)} autoFocus />
+                      <FilaForm key={s.id} valor={edit} onChange={setEdit} onGuardar={guardarEdicion} onCancelar={() => setEditandoId(null)} insumos={insumos} autoFocus />
                     ) : (
                       <tr key={s.id} className={!s.activo ? 'servicio-fila--inactivo' : ''}>
                         <td data-label="Servicio">
                           {s.nombre}
                           {!s.activo && <span className="servicio-badge-inactivo">Desactivado</span>}
+                          {s.insumos.length > 0 && (
+                            <div className="cell-muted servicio-receta-resumen">
+                              {s.insumos.map((r) => `${r.insumo.nombre} ${Number(r.cantidad)} ${r.insumo.unidad}`).join(' · ')}
+                            </div>
+                          )}
                         </td>
                         <td className="servicio-precio-cell" data-label="Precio">
                           Q{Number(s.precio).toFixed(2)}

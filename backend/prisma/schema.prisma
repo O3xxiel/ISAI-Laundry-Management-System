@@ -43,8 +43,22 @@ model Servicio {
   precio      Decimal      @db.Decimal(6, 2)
   activo      Boolean      @default(true)
   items       PedidoItem[]
+  insumos     ServicioInsumo[]
 
   @@map("servicios")
+}
+
+// Receta: cuánto de cada insumo gasta una unidad del servicio (por libra, por pieza o por servicio
+// fijo, según su unidadCobro). Al crear un pedido se descuenta del inventario automáticamente.
+model ServicioInsumo {
+  servicioId Int      @map("servicio_id")
+  servicio   Servicio @relation(fields: [servicioId], references: [id], onDelete: Cascade)
+  insumoId   Int      @map("insumo_id")
+  insumo     Insumo   @relation(fields: [insumoId], references: [id])
+  cantidad   Decimal  @db.Decimal(8, 3)
+
+  @@id([servicioId, insumoId])
+  @@map("servicio_insumos")
 }
 
 model Pedido {
@@ -99,6 +113,7 @@ model Insumo {
   unidad         String             @db.VarChar(20)
   stockMinimo    Decimal            @default(0) @map("stock_minimo") @db.Decimal(8, 2)
   movimientos    MovimientoInsumo[]
+  servicios      ServicioInsumo[]
 
   @@map("insumos")
 }

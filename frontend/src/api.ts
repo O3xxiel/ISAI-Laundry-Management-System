@@ -34,6 +34,12 @@ export interface Servicio {
   unidadCobro: UnidadCobro;
   precio: string;
   activo: boolean;
+  insumos: { insumoId: number; cantidad: string; insumo: { id: number; nombre: string; unidad: string } }[];
+}
+
+export interface InsumoReceta {
+  insumoId: number;
+  cantidad: number;
 }
 
 export interface PedidoItem {
@@ -186,9 +192,9 @@ export const api = {
   servicios: {
     listar: (incluirInactivos = false) =>
       request<Servicio[]>(`/api/servicios${incluirInactivos ? '?incluirInactivos=1' : ''}`),
-    crear: (data: { nombre: string; unidadCobro: UnidadCobro; precio: number }) =>
+    crear: (data: { nombre: string; unidadCobro: UnidadCobro; precio: number; insumos: InsumoReceta[] }) =>
       request<Servicio>('/api/servicios', { method: 'POST', body: JSON.stringify(data) }),
-    actualizar: (id: number, data: { nombre?: string; unidadCobro?: UnidadCobro; precio?: number }) =>
+    actualizar: (id: number, data: { nombre?: string; unidadCobro?: UnidadCobro; precio?: number; insumos?: InsumoReceta[] }) =>
       request<Servicio>(`/api/servicios/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
     cambiarEstado: (id: number, activo: boolean) =>
       request<Servicio>(`/api/servicios/${id}/estado`, { method: 'PATCH', body: JSON.stringify({ activo }) }),

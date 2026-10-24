@@ -34,43 +34,67 @@ export async function crearPedido(data: {
 }) {
   const servicios = await prisma.servicio.findMany({
     where: { id: { in: data.items.map((i) => i.servicioId) } },
+    include: { insumos: true },
   });
   const servicioPorId = new Map(servicios.map((s) => [s.id, s]));
 
+  // Consumo total por insumo = cantidad del renglón × cantidad de la receta, sumado entre renglones.
+  const consumoPorInsumo = new Map<number, number>();
   const itemsData = data.items.map((item) => {
     const servicio = servicioPorId.get(item.servicioId);
     if (!servicio) throw new Error(`Servicio ${item.servicioId} no existe`);
     const cantidad = servicio.unidadCobro === 'fijo' ? 1 : item.cantidad;
     const subtotal = Number(servicio.precio) * cantidad;
+    for (const r of servicio.insumos) {
+      consumoPorInsumo.set(r.insumoId, (consumoPorInsumo.get(r.insumoId) ?? 0) + Number(r.cantidad) * cantidad);
+    }
     return { servicioId: servicio.id, cantidad, subtotal };
   });
 
   const total = itemsData.reduce((acc, i) => acc + i.subtotal, 0);
 
-  const pedido = await prisma.pedido.create({
-    data: {
-      clienteId: data.clienteId,
-      usuarioId: data.usuarioId,
-      total,
-      fechaPromesa: data.fechaPromesa,
-      notas: data.notas,
-      items: { create: itemsData },
-      pagos: data.pagoInicial && data.pagoInicial.monto > 0 ? { create: [data.pagoInicial] } : undefined,
-    },
-    include: INCLUDE,
-  });
+  return prisma.$transaction(async (tx) => {
+    const pedido = await tx.pedido.create({
+      data: {
+        clienteId: data.clienteId,
+        usuarioId: data.usuarioId,
+        total,
+        fechaPromesa: data.fechaPromesa,
+        notas: data.notas,
+        items: { create: itemsData },
+        pagos: data.pagoInicial && data.pagoInicial.monto > 0 ? { create: [data.pagoInicial] } : undefined,
+      },
+      include: INCLUDE,
+    });
 
-  // La factura se genera sola: el total ya queda fijo al crear el pedido, así que no hay
-  // ninguna razón de negocio para que "facturar" sea un paso manual aparte.
-  await prisma.factura.create({
-    data: {
-      pedidoId: pedido.id,
-      numeroFactura: `F${String(pedido.id).padStart(6, '0')}`,
-      total: pedido.total,
-    },
-  });
+    // La factura se genera sola: el total ya queda fijo al crear el pedido, así que no hay
+    // ninguna razón de negocio para que "facturar" sea un paso manual aparte.
+    await tx.factura.create({
+      data: {
+        pedidoId: pedido.id,
+        numeroFactura: `F${String(pedido.id).padStart(6, '0')}`,
+        total: pedido.total,
+      },
+    });
 
-  return pedido;
+    // Sin validar stock a propósito: no se rechaza a un cliente porque el sistema "cree" que no
+    // hay detergente. El stock puede quedar negativo hasta que el conteo físico lo corrija.
+    for (const [insumoId, cantidad] of consumoPorInsumo) {
+      await tx.insumo.update({ where: { id: insumoId }, data: { cantidadActual: { decrement: cantidad } } });
+      await tx.movimientoInsumo.create({
+        data: {
+          insumoId,
+          usuarioId: data.usuarioId,
+          tipo: 'salida',
+          motivo: 'Consumo',
+          nota: `Pedido #${String(pedido.id).padStart(6, '0')}`,
+          cantidad,
+        },
+      });
+    }
+
+    return pedido;
+  });
 }
 
 export async function actualizarEstadoPedido(id: number, estado: string) {
