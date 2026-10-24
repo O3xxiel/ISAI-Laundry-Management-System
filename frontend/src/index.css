@@ -579,9 +579,15 @@ button:disabled {
 
 .dashboard-header-actions {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   gap: 0.75rem;
   flex-wrap: wrap;
+}
+
+.dashboard-header-actions input[type='date'],
+.dashboard-header-actions .btn-primary {
+  height: 36px;
+  box-sizing: border-box;
 }
 
 .fecha-rango {
