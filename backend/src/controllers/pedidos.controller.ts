@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import * as cajaService from '../services/caja.service';
 import * as pedidosService from '../services/pedidos.service';
 
 const ESTADOS_VALIDOS = ['recibido', 'en proceso', 'listo', 'entregado'];
@@ -32,6 +33,8 @@ export async function crear(req: Request, res: Response) {
   if (pagoInicial && !METODOS_VALIDOS.includes(pagoInicial.metodo)) {
     return res.status(400).json({ error: 'metodo de pago inválido' });
   }
+  const motivoCaja = await cajaService.motivoCajaNoDisponible();
+  if (motivoCaja) return res.status(409).json({ error: motivoCaja });
 
   const pedido = await pedidosService.crearPedido({
     clienteId,

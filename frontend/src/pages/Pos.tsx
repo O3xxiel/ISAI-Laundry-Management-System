@@ -1,7 +1,8 @@
 import { UserPlus, Trash2 } from 'lucide-react';
 import { useMemo, useState, useEffect } from 'react';
 import { api } from '../api';
-import type { Cliente, MetodoPago, Pedido, Servicio } from '../api';
+import { Link } from 'react-router-dom';
+import type { Cliente, CorteCaja, MetodoPago, Pedido, Servicio } from '../api';
 import AlertCard from '../components/AlertCard';
 import SearchSelect from '../components/SearchSelect';
 import Toast from '../components/Toast';
@@ -75,10 +76,15 @@ export default function Pos() {
   const [toastMsg, setToastMsg] = useState('');
   const [toastPedido, setToastPedido] = useState<Pedido | null>(null);
 
+  // undefined = todavía cargando; null = la caja de hoy no se ha abierto.
+  const [caja, setCaja] = useState<CorteCaja | null | undefined>(undefined);
+  const cajaAbierta = !!caja && !caja.cerradoEn;
+
   function cargar() {
     api.clientes.listar().then(setClientes);
     api.servicios.listar().then(setServicios);
     api.pedidos.listar().then(setPedidos);
+    api.caja.corte().then(setCaja);
   }
 
   useEffect(cargar, []);
@@ -207,6 +213,16 @@ export default function Pos() {
   return (
     <div>
       <h1>Punto de Venta</h1>
+
+      {caja !== undefined && !cajaAbierta && (
+        <div className="pos-aviso-caja">
+          <AlertCard tipo="warning">
+            {caja === null
+              ? <>La caja de hoy no se ha abierto, así que no se pueden registrar pedidos. <Link to="/caja">Abrir caja</Link></>
+              : 'La caja de hoy ya fue cerrada; no se pueden registrar más pedidos.'}
+          </AlertCard>
+        </div>
+      )}
 
       <form onSubmit={crearPedido} className="pos-layout">
         <div className="pos-main">
@@ -404,7 +420,7 @@ export default function Pos() {
             </label>
           )}
 
-          <button type="submit" className="pos-confirm-btn" disabled={!pedidoValido || guardando}>
+          <button type="submit" className="pos-confirm-btn" disabled={!pedidoValido || guardando || !cajaAbierta}>
             {labelBoton}
           </button>
         </aside>

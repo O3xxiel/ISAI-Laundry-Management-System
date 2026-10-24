@@ -100,6 +100,14 @@ export async function obtenerCorte(fecha = new Date()) {
   return construirCorte(corte);
 }
 
+// Devuelve null si se pueden registrar ventas hoy, o el motivo por el que no.
+export async function motivoCajaNoDisponible(fecha = new Date()) {
+  const corte = await prisma.corteCaja.findUnique({ where: { fecha: fechaISO(fecha) } });
+  if (!corte) return 'La caja de hoy no se ha abierto. Ábrela en Caja antes de registrar pedidos.';
+  if (corte.cerradoEn) return 'La caja de hoy ya fue cerrada; no se pueden registrar más pedidos.';
+  return null;
+}
+
 export async function abrirCaja(fecha: Date, fondoInicial: number, responsableId: number) {
   const fechaStr = fechaISO(fecha);
   const existente = await prisma.corteCaja.findUnique({ where: { fecha: fechaStr } });

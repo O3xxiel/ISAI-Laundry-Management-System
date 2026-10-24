@@ -2859,3 +2859,11 @@ tbody tr:hover .servicio-hover-accion {
   margin-top: 0.15rem;
 }
 
+.pos-aviso-caja {
+  margin-bottom: 1rem;
+}
+
+.pos-aviso-caja a {
+  color: inherit;
+  font-weight: 600;
+}
