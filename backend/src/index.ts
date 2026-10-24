@@ -15,6 +15,10 @@ import usuariosRouter from './routes/usuarios.routes';
 import { requireAuth } from './middleware/auth.middleware';
 import { requireRole } from './middleware/role.middleware';
 
+// El negocio opera en Guatemala, pero el servidor está en Europa y los contenedores corren en UTC.
+// Todo el cálculo de "hoy" (caja del día, rangos del dashboard, ventas por hora) usa la hora local.
+process.env.TZ = 'America/Guatemala';
+
 const app = express();
 app.use(cors({ origin: process.env.FRONTEND_URL ?? 'http://localhost:5173', credentials: true }));
 app.use(express.json());
