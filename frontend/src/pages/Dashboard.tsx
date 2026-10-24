@@ -2,6 +2,7 @@ import {
   AlertTriangle,
   CheckCircle2,
   Clock,
+  FileSpreadsheet,
   Inbox,
   Package,
   Plus,
@@ -10,6 +11,7 @@ import {
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { api } from '../api';
+import AlertCard from '../components/AlertCard';
 import type { Kpis } from '../api';
 import { folio, waLink } from '../utils';
 
@@ -267,6 +269,20 @@ export default function Dashboard() {
   const [kpis, setKpis] = useState<Kpis | null>(null);
   const [desde, setDesde] = useState('');
   const [hasta, setHasta] = useState('');
+  const [exportando, setExportando] = useState(false);
+  const [errorExport, setErrorExport] = useState('');
+
+  async function exportarExcel() {
+    setExportando(true);
+    setErrorExport('');
+    try {
+      await api.reportes.descargarExcel(desde || undefined, hasta || undefined);
+    } catch (err) {
+      setErrorExport((err as Error).message);
+    } finally {
+      setExportando(false);
+    }
+  }
 
   useEffect(() => {
     api.dashboard.obtener(desde || undefined, hasta || undefined).then(setKpis);
@@ -298,11 +314,16 @@ export default function Dashboard() {
               </button>
             )}
           </div>
+          <button type="button" className="btn-secondary" onClick={exportarExcel} disabled={exportando}>
+            <FileSpreadsheet size={16} strokeWidth={2} /> {exportando ? 'Generando…' : 'Exportar Excel'}
+          </button>
           <a className="btn-primary" href="/pos">
             <Plus size={16} strokeWidth={2} /> Nueva orden
           </a>
         </div>
       </div>
+
+      {errorExport && <AlertCard>{errorExport}</AlertCard>}
 
       <p className="section-muted">
         {filtroActivo

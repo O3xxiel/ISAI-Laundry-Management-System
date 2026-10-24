@@ -585,7 +585,8 @@ button:disabled {
 }
 
 .dashboard-header-actions input[type='date'],
-.dashboard-header-actions .btn-primary {
+.dashboard-header-actions .btn-primary,
+.dashboard-header-actions .btn-secondary {
   height: 36px;
   box-sizing: border-box;
 }

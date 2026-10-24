@@ -235,6 +235,31 @@ export const api = {
     generar: (pedidoId: number) =>
       request<Factura>('/api/facturacion', { method: 'POST', body: JSON.stringify({ pedidoId }) }),
   },
+  reportes: {
+    // Descarga el Excel (pedidos, facturación y caja) del periodo; sin fechas, el de hoy.
+    descargarExcel: async (desde?: string, hasta?: string) => {
+      const params = new URLSearchParams();
+      if (desde) params.set('desde', desde);
+      if (hasta) params.set('hasta', hasta);
+      let res: Response;
+      try {
+        res = await fetch(`${BASE_URL}/api/reportes/excel?${params}`, { credentials: 'include' });
+      } catch {
+        throw new Error('No se pudo conectar con el servidor. Revisa tu conexión e intenta de nuevo.');
+      }
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error ?? `Error ${res.status}`);
+      }
+      const nombre = res.headers.get('Content-Disposition')?.match(/filename="(.+)"/)?.[1] ?? 'ISAI-reporte.xlsx';
+      const url = URL.createObjectURL(await res.blob());
+      const enlace = document.createElement('a');
+      enlace.href = url;
+      enlace.download = nombre;
+      enlace.click();
+      URL.revokeObjectURL(url);
+    },
+  },
   dashboard: {
     obtener: (desde?: string, hasta?: string) => {
       const params = new URLSearchParams();

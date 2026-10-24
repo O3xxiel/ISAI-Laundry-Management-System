@@ -11,7 +11,7 @@ function rangoDia(fecha: Date) {
 }
 
 // 'YYYY-MM-DD' del día local. No usar toISOString(): convierte a UTC y puede cambiar de día.
-function fechaISO(fecha: Date) {
+export function fechaISO(fecha: Date) {
   const dos = (n: number) => String(n).padStart(2, '0');
   return `${fecha.getFullYear()}-${dos(fecha.getMonth() + 1)}-${dos(fecha.getDate())}`;
 }
@@ -155,6 +155,16 @@ export async function cerrarCaja(corteCajaId: number, conteoReal: number) {
     include: { responsable: { select: { nombre: true } } },
   });
   return construirCorte(cerrado);
+}
+
+// desde/hasta en formato 'YYYY-MM-DD' (inclusive), igual que CorteCaja.fecha.
+export async function listarCortesEntre(desde: string, hasta: string) {
+  const cortes = await prisma.corteCaja.findMany({
+    where: { fecha: { gte: desde, lte: hasta } },
+    orderBy: { fecha: 'asc' },
+    include: { responsable: { select: { nombre: true } } },
+  });
+  return Promise.all(cortes.map(construirCorte));
 }
 
 export async function listarHistorial() {
