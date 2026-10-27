@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import { prisma } from '../lib/prisma';
 import * as usuariosService from '../services/usuarios.service';
 
 const ROLES_VALIDOS = ['admin', 'empleado'];
@@ -11,6 +12,9 @@ export async function crear(req: Request, res: Response) {
   const { nombre, usuario, contrasena, rol } = req.body;
   if (!nombre || !usuario || !contrasena || !ROLES_VALIDOS.includes(rol)) {
     return res.status(400).json({ error: 'nombre, usuario, contrasena y rol (admin/empleado) son requeridos' });
+  }
+  if (await prisma.usuario.findUnique({ where: { usuario } })) {
+    return res.status(400).json({ error: `Ya existe un empleado con el usuario "${usuario}".` });
   }
   res.status(201).json(await usuariosService.crearUsuario({ nombre, usuario, contrasena, rol }));
 }
